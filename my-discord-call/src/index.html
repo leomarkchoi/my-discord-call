@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Discord Voice</title>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #313338; color: #f2f3f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .card { background: #2b2d31; padding: 24px; border-radius: 12px; width: 360px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
+    .id-box { background: #1e1f22; padding: 10px; border-radius: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .id-text { color: #00a8fc; font-weight: bold; word-break: break-all; }
+    .btn-small { width: auto; padding: 4px 10px; font-size: 12px; margin: 0; background: #4e5058; }
+    input, button { width: 100%; padding: 11px; margin: 6px 0; border-radius: 6px; border: none; box-sizing: border-box; font-size: 14px; }
+    input { background: #1e1f22; color: #fff; outline: none; }
+    button { background: #5865f2; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #4752c4; }
+    .btn-mute { background: #4e5058; }
+    .btn-hangup { background: #da373c; }
+    .btn-hangup:hover { background: #a1282c; }
+    .status { font-size: 13px; color: #949ba4; margin-top: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h3>🎙️ Voice Channel</h3>
+    <div class="id-box">
+      <span>ID: <span id="my-id" class="id-text">ກຳລັງເຊື່ອມຕໍ່...</span></span>
+      <button class="btn-small" onclick="copyId()">Copy</button>
+    </div>
+    <input type="text" id="peer-id" placeholder="ວາງ ID ຂອງໝູ່ທີ່ນີ້">
+    <button id="call-btn" onclick="startCall()">📞 ໂທຫາ (Join Call)</button>
+    <button id="mute-btn" class="btn-mute" onclick="toggleMute()" style="display:none;">🔇 ປິດໄມ (Mute)</button>
+    <button id="hangup-btn" class="btn-hangup" onclick="hangUp()" style="display:none;">📵 ວາງສາຍ (Disconnect)</button>
+    <div id="status" class="status">ພ້ອມໃຊ້ງານ</div>
+    <audio id="remote-audio" autoplay></audio>
+  </div>
+
+  <script>
+    const peer = new Peer();
+    let localStream;
+    let currentCall;
+    let isMuted = false;
+
+    peer.on('open', id => {
+      document.getElementById('my-id').innerText = id;
+    });
+
+    peer.on('error', err => {
+      document.getElementById('status').innerText = 'Error: ' + err.type;
+    });
+
+    // ຮັບສາຍເຂົ້າອັດຕະໂນມັດ
+    peer.on('call', async call => {
+      try {
+        document.getElementById('status').innerText = 'ກຳລັງຮັບສາຍ...';
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        call.answer(localStream);
+        setupCallEvents(call);
+      } catch (err) {
+        alert('ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: ' + err.message);
+      }
+    });
+
+    // ໂທອອກ
+    async function startCall() {
+      const friendId = document.getElementById('peer-id').value.trim();
+      if (!friendId) return alert('ກະລຸນາໃສ່ ID ຂອງໝູ່');
+      try {
+        document.getElementById('status').innerText = 'ກຳລັງໂທຫາ...';
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const call = peer.call(friendId, localStream);
+        setupCallEvents(call);
+      } catch (err) {
+        alert('ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: ' + err.message);
+      }
+    }
+
+    function setupCallEvents(call) {
+      currentCall = call;
+      document.getElementById('call-btn').style.display = 'none';
+      document.getElementById('mute-btn').style.display = 'block';
+      document.getElementById('hangup-btn').style.display = 'block';
+
+      call.on('stream', remoteStream => {
+        document.getElementById('remote-audio').srcObject = remoteStream;
+        document.getElementById('status').innerText = '🟢 ເຊື່ອມຕໍ່ສຽງສຳເລັດ';
+      });
+
+      call.on('close', resetUI);
+    }
+
+    function toggleMute() {
+      if (!localStream) return;
+      isMuted = !isMuted;
+      localStream.getAudioTracks()[0].enabled = !isMuted;
+      document.getElementById('mute-btn').innerText = isMuted ? '🔊 ເປີດໄມ (Unmute)' : '🔇 ປິດໄມ (Mute)';
+    }
+
+    function hangUp() {
+      if (currentCall) currentCall.close();
+      resetUI();
+    }
+
+    function resetUI() {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      document.getElementById('call-btn').style.display = 'block';
+      document.getElementById('mute-btn').style.display = 'none';
+      document.getElementById('hangup-btn').style.display = 'none';
+      document.getElementById('status').innerText = 'ວາງສາຍແລ້ວ';
+    }
+
+    function copyId() {
+      const id = document.getElementById('my-id').innerText;
+      navigator.clipboard.writeText(id);
+      alert('ກັອບປີ້ ID ແລ້ວ: ' + id);
+    }
+  </script>
+</body>
+</html>
