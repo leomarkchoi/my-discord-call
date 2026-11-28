@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MDC Account — @mdc.http</title>
+  <style>
+    :root {
+      --bg-page: #0e1013;
+      --bg-card: #161a1f;
+      --bg-input: #1e232a;
+      --bg-input-focus: #232931;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --text-main: #f3f4f6;
+      --text-muted: #8b949e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: radial-gradient(circle at top right, #142622 0%, var(--bg-page) 48%);
+      color: var(--text-main);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .domain-pill {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg-input);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 22px;
+      gap: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    /* Form Controls */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    input {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 10px;
+      border: none;
+      background: var(--bg-input);
+      color: var(--text-main);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: background 0.15s;
+    }
+    input:focus { background: var(--bg-input-focus); }
+
+    /* Custom @mdc.http Input */
+    .mdc-email-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--bg-input);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: background 0.15s;
+    }
+    .mdc-email-wrap:focus-within { background: var(--bg-input-focus); }
+    .mdc-email-wrap input {
+      background: transparent;
+      border-radius: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .mdc-suffix {
+      padding: 0 13px 0 6px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 13px;
+      color: var(--accent);
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .email-preview {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      min-height: 16px;
+    }
+
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 6px 0 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 400;
+    }
+    .checkbox-label input { width: auto; accent-color: var(--accent); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #05261c;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); color: #fff; }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      background: var(--bg-input);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-ghost:hover { background: #262c35; }
+
+    .alert {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .alert.show { display: block; }
+    .alert.error { background: rgba(239, 68, 68, 0.14); color: #fca5a5; }
+    .alert.success { background: rgba(16, 185, 129, 0.14); color: #6ee7b7; }
+
+    .hidden { display: none; }
+
+    /* Logged-in Profile Card */
+    .profile-box {
+      background: var(--bg-input);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .profile-email {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: var(--accent);
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .meta-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .chip {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="auth-card">
+    <div class="brand">
+      <div class="brand-title">
+        <span class="brand-dot"></span>
+        <span>MDC Access</span>
+      </div>
+      <span class="domain-pill">@mdc.http</span>
+    </div>
+
+    <div id="alert-box" class="alert"></div>
+
+    <!-- Auth Views -->
+    <div id="auth-views">
+      <div class="tabs">
+        <button type="button" id="tab-login" class="tab-btn active" onclick="switchTab('login')">ເຂົ້າສູ່ລະບົບ (Log In)</button>
+        <button type="button" id="tab-register" class="tab-btn" onclick="switchTab('register')">ສ້າງບັນຊີ (Register)</button>
+      </div>
+
+      <!-- LOG IN FORM -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-handle">ອີເມວ MDC</label>
+          <div class="mdc-email-wrap">
+            <input id="login-handle" type="text" placeholder="username" autocomplete="username" required />
+            <span class="mdc-suffix">@mdc.http</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">ລະຫັດຜ່ານ</label>
+          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+
+        <div class="row-between">
+          <label class="checkbox-label">
+            <input id="remember-me" type="checkbox" checked />
+            ຈື່ການເຂົ້າສູ່ລະບົບໄວ້
+          </label>
+          <span>Protocol: mdc.http</span>
+        </div>
+
+        <button type="submit" class="btn-primary">ເຂົ້າສູ່ລະບົບ</button>
+      </form>
+
+      <!-- REGISTER / CREATE ACCOUNT FORM -->
+      <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-display">ຊື່ສະແດງໃນຫ້ອງ (Display Name)</label>
+          <input id="reg-display" type="text" placeholder="ເຊັ່ນ Anoulak" required />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-handle">ຕັ້ງອີເມວດັດແປງ (Name@mdc.http)</label>
+          <div class="mdc-email-wrap">
+            <input id="reg-handle" type="text" placeholder="name.dev" oninput="updateEmailPreview()" required />
+            <span class="mdc-suffix">@mdc.http</span>
+          </div>
+          <div id="reg-preview" class="email-preview">ຕົວຢ່າງ: name.dev@mdc.http</div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">ລະຫັດຜ່ານ (ຢ່າງໜ້ອຍ 6 ຕົວ)</label>
+          <input id="reg-password" type="password" placeholder="••••••••" minlength="6" required />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirm">ຢືນຢັນລະຫັດຜ່ານ</label>
+          <input id="reg-confirm" type="password" placeholder="••••••••" minlength="6" required />
+        </div>
+
+        <button type="submit" class="btn-primary">ສ້າງບັນຊີໃໝ່ (Create Account)</button>
+      </form>
+    </div>
+
+    <!-- SESSION READY VIEW -->
+    <section id="session-view" class="hidden">
+      <div class="profile-box">
+        <strong id="session-name" style="font-size: 16px;">User</strong>
+        <div id="session-email" class="profile-email">user@mdc.http</div>
+        <div class="meta-row">
+          <span class="chip" id="session-role">Role: Member</span>
+          <span class="chip" id="session-jp">Join Power: 10</span>
+        </div>
+      </div>
+      <button type="button" class="btn-primary" onclick="enterWorkspace()">ເຂົ້າສູ່ຫ້ອງສົນທະນາ (Enter Hub)</button>
+      <button type="button" class="btn-ghost" onclick="handleLogout()">ອອກຈາກລະບົບ (Log Out)</button>
+    </section>
+  </main>
+
+  <script>
+    const DOMAIN = "@mdc.http";
+    const USERS_KEY = "mdc_users_v1";
+    const SESSION_KEY = "mdc_current_session_v1";
+
+    function normalizeMdcEmail(raw) {
+      let clean = raw.trim().toLowerCase();
+      if (clean.endsWith(DOMAIN)) {
+        clean = clean.slice(0, -DOMAIN.length);
+      }
+      // ອະນຸຍາດສະເພາະ a-z, 0-9, ., _, -
+      const validHandle = /^[a-z0-9._-]{3,32}$/.test(clean);
+      return { valid: validHandle, handle: clean, email: clean ? clean + DOMAIN : "" };
+    }
+
+    function updateEmailPreview() {
+      const val = document.getElementById("reg-handle").value;
+      const preview = document.getElementById("reg-preview");
+      if (!val.trim()) {
+        preview.textContent = "ຕົວຢ່າງ: name.dev@mdc.http";
+        preview.style.color = "var(--text-muted)";
+        return;
+      }
+      const res = normalizeMdcEmail(val);
+      if (res.valid) {
+        preview.textContent = "✓ ໃຊ້ໄດ້: " + res.email;
+        preview.style.color = "var(--accent)";
+      } else {
+        preview.textContent = "✕ ໃຊ້ໄດ້ສະເພາະ a-z, 0-9, . _ - (3–32 ຕົວ)";
+        preview.style.color = "var(--warning)";
+      }
+    }
+
+    async function hashPassword(password) {
+      const data = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    function getUsers() {
+      try { return JSON.parse(localStorage.getItem(USERS_KEY) || "[]"); }
+      catch { return []; }
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    function showAlert(message, type = "error") {
+      const box = document.getElementById("alert-box");
+      box.textContent = message;
+      box.className = `alert show ${type}`;
+    }
+
+    function clearAlert() {
+      const box = document.getElementById("alert-box");
+      box.className = "alert";
+    }
+
+    function switchTab(mode) {
+      clearAlert();
+      const isLogin = mode === "login";
+      document.getElementById("tab-login").classList.toggle("active", isLogin);
+      document.getElementById("tab-register").classList.toggle("active", !isLogin);
+      document.getElementById("form-login").classList.toggle("hidden", !isLogin);
+      document.getElementById("form-register").classList.toggle("hidden", isLogin);
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      clearAlert();
+
+      const displayName = document.getElementById("reg-display").value.trim();
+      const handleInput = document.getElementById("reg-handle").value;
+      const password = document.getElementById("reg-password").value;
+      const confirm = document.getElementById("reg-confirm").value;
+
+      const parsed = normalizeMdcEmail(handleInput);
+      if (!parsed.valid) {
+        return showAlert("ຊື່ອີເມວບໍ່ຖືກຕ້ອງ (ໃຊ້ a-z, 0-9, . _ - ຄວາມຍາວ 3–32 ຕົວ)");
+      }
+      if (password !== confirm) {
+        return showAlert("ລະຫັດຜ່ານ ແລະ ການຢືນຢັນບໍ່ກົງກັນ");
+      }
+
+      const users = getUsers();
+      if (users.some(u => u.email === parsed.email)) {
+        return showAlert(`ອີເມວ ${parsed.email} ມີຜູ້ໃຊ້ແລ້ວ`);
+      }
+
+      const passwordHash = await hashPassword(password);
+      const newUser = {
+        id: "u_" + Date.now(),
+        displayName,
+        email: parsed.email,
+        passwordHash,
+        role: "Member",
+        joinPower: 10,
+        movePower: 10,
+        createdAt: new Date().toISOString()
+      };
+
+      users.push(newUser);
+      saveUsers(users);
+      setSession(newUser, true);
+      showAlert(`ສ້າງບັນຊີ ${newUser.email} ສຳເລັດ!`, "success");
+      renderSession();
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      clearAlert();
+
+      const handleInput = document.getElementById("login-handle").value;
+      const password = document.getElementById("login-password").value;
+      const remember = document.getElementById("remember-me").checked;
+
+      const parsed = normalizeMdcEmail(handleInput);
+      if (!parsed.valid) {
+        return showAlert("ຮູບແບບອີເມວ @mdc.http ບໍ່ຖືກຕ້ອງ");
+      }
+
+      const users = getUsers();
+      const user = users.find(u => u.email === parsed.email);
+      if (!user) {
+        return showAlert(`ບໍ່ພົບບັນຊີ ${parsed.email}`);
+      }
+
+      const passwordHash = await hashPassword(password);
+      if (user.passwordHash !== passwordHash) {
+        return showAlert("ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ");
+      }
+
+      setSession(user, remember);
+      renderSession();
+    }
+
+    function setSession(user, remember) {
+      const payload = JSON.stringify({
+        id: user.id,
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role,
+        joinPower: user.joinPower,
+        movePower: user.movePower
+      });
+      if (remember) localStorage.setItem(SESSION_KEY, payload);
+      else sessionStorage.setItem(SESSION_KEY, payload);
+    }
+
+    function getSession() {
+      const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+      try { return raw ? JSON.parse(raw) : null; }
+      catch { return null; }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      clearAlert();
+      renderSession();
+    }
+
+    function enterWorkspace() {
+      // ປ່ຽນໄປໜ້າຫຼັກຂອງແອັບ (index.html)
+      window.location.href = "index.html";
+    }
+
+    function renderSession() {
+      const session = getSession();
+      const authViews = document.getElementById("auth-views");
+      const sessionView = document.getElementById("session-view");
+
+      if (session) {
+        authViews.classList.add("hidden");
+        sessionView.classList.remove("hidden");
+        document.getElementById("session-name").textContent = session.displayName;
+        document.getElementById("session-email").textContent = session.email;
+        document.getElementById("session-role").textContent = `Role: ${session.role}`;
+        document.getElementById("session-jp").textContent = `Join Power: ${session.joinPower}`;
+      } else {
+        authViews.classList.remove("hidden");
+        sessionView.classList.add("hidden");
+      }
+    }
+
+    renderSession();
+  </script>
+</body>
+</html>
