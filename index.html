@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MDC Hub — Voice, Friends, Chat &amp; Post</title>
+  <title>MDC Hub — Voice, Video, Chat &amp; Post</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -86,13 +86,25 @@
     /* ================= WORKSPACE ================= */
     .app-shell { display: grid; grid-template-columns: 275px 1fr; height: 100vh; }
     .sidebar { background: var(--bg-sidebar); display: flex; flex-direction: column; min-height: 0; }
-    .server-header, .my-id-box { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .server-header { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .font-bar { padding: 0 14px 8px; display: flex; align-items: center; gap: 8px; }
     .font-bar select { flex: 1; padding: 6px 10px; font-size: 12px; }
+
+    .call-id-card {
+      margin: 4px 10px 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--bg-main);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .call-id-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .call-id-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .id-text { color: var(--accent); font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 600; font-size: 12px; word-break: break-all; }
 
     .nav-friends-btn {
-      margin: 4px 10px 6px;
+      margin: 0 10px 6px;
       padding: 10px 12px;
       border-radius: 10px;
       background: var(--bg-surface);
@@ -143,6 +155,7 @@
     .mini-avatar.speaking { box-shadow: 0 0 0 2px var(--accent); }
 
     .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: var(--bg-main); color: var(--text-muted); }
+    .badge-sync { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
     .user-footer {
       background: var(--bg-main); margin: 10px; padding: 12px; border-radius: 10px;
       display: flex; flex-direction: column; gap: 6px;
@@ -159,6 +172,18 @@
     .stage-header h2 { margin: 0; font-size: 16px; }
     .stage-sub { font-size: 12px; color: var(--text-muted); }
     .stage-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+    /* Invite Banner */
+    .invite-banner {
+      background: var(--accent-soft);
+      padding: 10px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
 
     /* Inputs & Buttons */
     input, textarea, select {
@@ -181,22 +206,33 @@
     .btn-danger-soft { background: var(--danger-soft); color: #fca5a5; }
     .btn-danger-soft:hover { background: var(--danger); color: #fff; }
 
-    /* ================= DISCORD-STYLE VOICE STAGE ================= */
-    .voice-workspace { flex: 1; display: grid; grid-template-columns: 1fr 330px; min-height: 0; }
+    /* ================= DISCORD-STYLE VOICE & VIDEO STAGE ================= */
+    .voice-workspace { flex: 1; display: grid; grid-template-columns: 1fr 340px; min-height: 0; }
     .voice-workspace.chat-closed { grid-template-columns: 1fr; }
     .voice-stage-col { display: flex; flex-direction: column; background: #0c0e10; min-height: 0; position: relative; }
     .voice-call-bar { padding: 12px 18px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--bg-main); }
     .voice-tiles {
       flex: 1; padding: 24px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px; align-content: center; overflow-y: auto;
     }
     .voice-tile {
       background: var(--bg-sidebar); border-radius: 14px; aspect-ratio: 16 / 10;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 12px; position: relative; padding: 16px; transition: box-shadow 0.15s;
+      gap: 12px; position: relative; padding: 16px; overflow: hidden;
+      transition: box-shadow 0.15s;
     }
     .voice-tile.speaking { box-shadow: inset 0 0 0 2.5px var(--accent); }
+    .tile-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+      z-index: 1;
+    }
+    .tile-video.mirror { transform: scaleX(-1); }
     .voice-avatar {
       width: 72px; height: 72px; border-radius: 50%;
       background: var(--bg-surface); color: var(--accent);
@@ -208,10 +244,10 @@
       transform: scale(1.04);
     }
     .voice-tile-footer {
-      position: absolute; bottom: 10px; left: 12px; right: 12px;
+      position: absolute; bottom: 10px; left: 12px; right: 12px; z-index: 2;
       display: flex; justify-content: space-between; align-items: center; font-size: 12px;
     }
-    .voice-name-pill { background: rgba(17, 19, 21, 0.78); padding: 4px 9px; border-radius: 6px; font-weight: 600; }
+    .voice-name-pill { background: rgba(17, 19, 21, 0.82); padding: 4px 9px; border-radius: 6px; font-weight: 600; }
     .voice-dock {
       padding: 16px; display: flex; justify-content: center; align-items: center; gap: 12px;
       background: linear-gradient(to top, rgba(12, 14, 16, 0.96), transparent);
@@ -223,6 +259,7 @@
     }
     .dock-btn:hover { background: var(--bg-hover); }
     .dock-btn.active { background: var(--text-main); color: #111315; }
+    .dock-btn.cam-on { background: var(--accent); color: #05261c; }
     .dock-btn.ptt-on { background: var(--accent-soft); color: var(--accent); width: auto; padding: 0 16px; border-radius: 999px; font-size: 13px; }
     .dock-btn.disconnect { background: var(--danger); color: #fff; width: 56px; border-radius: 999px; }
     .dock-btn.disconnect:hover { background: #dc2626; }
@@ -245,13 +282,17 @@
     .chat-feed { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
     .msg-item { background: transparent; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
     .msg-item:hover { background: var(--bg-sidebar); }
-    .msg-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .msg-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
     .msg-meta { font-size: 12px; color: var(--text-muted); }
     .msg-meta strong { color: var(--accent); margin-right: 6px; }
+    .edited-tag { font-size: 11px; color: var(--text-muted); font-style: italic; margin-left: 6px; }
     .msg-reply-ref { font-size: 12px; color: var(--text-muted); background: var(--bg-surface); padding: 4px 8px; border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 6px; }
-    .msg-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
-    .msg-top .btn-small, .msg-actions .hover-only { opacity: 0; transition: opacity 0.15s; }
-    .msg-item:hover .msg-top .btn-small, .msg-item:hover .msg-actions .hover-only { opacity: 1; }
+    .msg-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+    .msg-top-btns { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+    .msg-item:hover .msg-top-btns, .msg-item:hover .msg-actions .hover-only { opacity: 1; }
+    .msg-actions .hover-only { opacity: 0; transition: opacity 0.15s; }
+    .inline-edit-form { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .inline-edit-form input { flex: 1; min-width: 160px; padding: 8px 10px; }
     .react-btn { background: var(--bg-surface); color: var(--text-main); padding: 3px 8px; font-size: 12px; border-radius: 12px; }
     .react-btn:hover { background: var(--bg-hover); }
     .reply-banner { padding: 8px 16px; background: var(--bg-sidebar); font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
@@ -266,13 +307,14 @@
     .tag-pill { background: var(--bg-sidebar); color: var(--text-muted); padding: 5px 12px; border-radius: 14px; font-size: 12px; }
     .tag-pill.active { background: var(--accent); color: #05261c; }
     .post-card { background: var(--bg-sidebar); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-    .post-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .post-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+    .post-header-right { display: flex; align-items: center; gap: 6px; }
     .post-title { margin: 0; font-size: 16px; }
     .post-body { margin: 0; font-size: 14px; color: #d1d5db; white-space: pre-wrap; line-height: 1.55; }
-    .post-img { max-width: 100%; max-height: 280px; border-radius: 10px; object-fit: cover; }
+    .post-img { max-width: 100%; max-height: 360px; border-radius: 10px; object-fit: contain; background: var(--bg-main); align-self: flex-start; }
     .post-footer { display: flex; gap: 10px; align-items: center; }
     .comment-box { background: var(--bg-main); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .comment-item { font-size: 13px; color: #d1d5db; }
+    .comment-item { font-size: 13px; color: #d1d5db; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .comment-form { display: flex; gap: 6px; }
     .comment-form input { flex: 1; padding: 8px 10px; }
 
@@ -286,6 +328,13 @@
     .log-tag.LOGIN { background: var(--accent-soft); color: var(--accent); }
     .log-tag.LOGOUT { background: var(--danger-soft); color: #fca5a5; }
     .log-tag.REGISTER { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 1200;
+      background: var(--bg-sidebar); color: var(--accent);
+      padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
 
     @media (max-width: 900px) {
       .voice-workspace { grid-template-columns: 1fr; }
@@ -336,15 +385,15 @@
       <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
         <div class="form-group">
           <label for="reg-display">ຊື່ສະແດງໃນຫ້ອງ (Display Name)</label>
-          <input id="reg-display" type="text" placeholder="ເຊັ່ນ Anoulak" required />
+          <input id="reg-display" type="text" placeholder="ເຊັ່ນ Santooi" required />
         </div>
         <div class="form-group">
           <label for="reg-handle">ຕັ້ງອີເມວດັດແປງ (Name@mdc.http)</label>
           <div class="mdc-email-wrap">
-            <input id="reg-handle" type="text" placeholder="name.dev" oninput="updateEmailPreview()" required />
+            <input id="reg-handle" type="text" placeholder="santoi" oninput="updateEmailPreview()" required />
             <span class="mdc-suffix">@mdc.http</span>
           </div>
-          <div id="reg-preview" class="email-preview">ຕົວຢ່າງ: name.dev@mdc.http</div>
+          <div id="reg-preview" class="email-preview">ຕົວຢ່າງ: santoi@mdc.http</div>
         </div>
         <div class="form-group">
           <label for="reg-password">ລະຫັດຜ່ານ (ຢ່າງໜ້ອຍ 6 ຕົວ)</label>
@@ -364,7 +413,7 @@
     <aside class="sidebar">
       <div class="server-header">
         <div class="brand-title" style="font-size: 15px;"><span class="brand-dot"></span><span>MDC Hub</span></div>
-        <span class="badge">v0.4.2</span>
+        <span class="badge">v0.6</span>
       </div>
 
       <div class="font-bar">
@@ -376,9 +425,16 @@
         </select>
       </div>
 
-      <div class="my-id-box">
-        <span>ID: <span id="my-peer-id" class="id-text">ກຳລັງເຊື່ອມຕໍ່...</span></span>
-        <button type="button" class="btn-small" onclick="copyId()">Copy</button>
+      <!-- ຊື່ໂທຖາວອນ (@mdc.http) + ປຸ່ມກັອບລິ້ງເຊີນ -->
+      <div class="call-id-card">
+        <div class="call-id-row">
+          <span class="stage-sub">ຊື່ໂທຂອງເຈົ້າ:</span>
+          <span id="my-call-handle" class="id-text">ກຳລັງເຊື່ອມຕໍ່...</span>
+        </div>
+        <div class="call-id-actions">
+          <button type="button" class="btn-small" onclick="copyMyHandle()">📋 Copy ຊື່</button>
+          <button type="button" class="btn-small" style="background: var(--accent-soft); color: var(--accent);" onclick="copyInviteLink()">🔗 ລິ້ງເຊີນ</button>
+        </div>
       </div>
 
       <div id="nav-friends" class="nav-friends-btn" onclick="openFriendsView()">
@@ -417,8 +473,16 @@
           <h2 id="active-channel-title">General Voice</h2>
           <div id="active-channel-sub" class="stage-sub">ພ້ອມໃຊ້ງານ</div>
         </div>
-        <div id="header-actions" style="display: flex; align-items: center; gap: 8px;"></div>
+        <div id="header-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"></div>
       </header>
+
+      <div id="invite-banner" class="invite-banner hidden">
+        <span>📞 ໄດ້ຮັບຄຳເຊີນໂທຈາກ <strong id="invite-caller-label"></strong></span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onclick="acceptInviteCall()">📞 ໂທເຂົ້າຫ້ອງທັນທີ</button>
+          <button type="button" class="btn-small" onclick="dismissInvite()">✕</button>
+        </div>
+      </div>
 
       <div id="stage-body" class="stage-body"></div>
     </main>
@@ -438,17 +502,21 @@
     </div>
   </div>
 
+  <div id="toast" class="toast hidden"></div>
   <audio id="remote-audio" autoplay playsinline></audio>
 
   <script>
-    /* ================= STORAGE KEYS ================= */
+    /* ================= STORAGE KEYS & CONSTANTS ================= */
     const FONT_KEY = "mdc_font_preset_v1";
     const DOMAIN = "@mdc.http";
+    const PEER_PREFIX = "mdchub-v1-";
     const USERS_KEY = "mdc_users_v1";
     const SESSION_KEY = "mdc_current_session_v1";
     const AUTH_LOGS_KEY = "mdc_auth_logs_v1";
     const FRIENDS_KEY = "mdc_friends_v1";
     const CHANNELS_KEY = "mdc_channels_v1";
+    const MESSAGES_KEY = "mdc_messages_v2";
+    const POSTS_KEY = "mdc_posts_v2";
 
     /* ================= FONT SELECTOR ================= */
     const FONT_PRESETS = {
@@ -465,7 +533,7 @@
     }
     applyFontPreset(localStorage.getItem(FONT_KEY) || "eng_somvang");
 
-    /* ================= HELPERS ================= */
+    /* ================= HELPERS & HANDLE <-> PEER ID ================= */
     function escapeHtml(str) {
       return String(str ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
@@ -474,6 +542,35 @@
     }
     function initials(name) {
       return (name || "?").trim().slice(0, 2).toUpperCase();
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add("hidden"), 2600);
+    }
+
+    function handleToPeerId(raw) {
+      const clean = (raw || "").trim().toLowerCase();
+      if (!clean) return "";
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean)) return clean;
+      if (clean.startsWith(PEER_PREFIX)) return clean;
+      const handle = clean.endsWith(DOMAIN) ? clean.slice(0, -DOMAIN.length) : clean;
+      if (!/^[a-z0-9._-]{3,40}$/.test(handle)) return "";
+      return PEER_PREFIX + handle.replace(/\./g, "_dot_");
+    }
+    function peerIdToHandle(peerId) {
+      if (!peerId) return "";
+      if (peerId.startsWith(PEER_PREFIX)) return peerId.slice(PEER_PREFIX.length).replace(/_dot_/g, ".") + DOMAIN;
+      return peerId;
+    }
+    function peerIdToShortHandle(peerId) {
+      if (!peerId) return "";
+      if (peerId.startsWith(PEER_PREFIX)) return peerId.slice(PEER_PREFIX.length).replace(/_dot_/g, ".");
+      return peerId;
     }
 
     /* ================= AUTH & LOGS ================= */
@@ -485,7 +582,7 @@
     function updateEmailPreview() {
       const val = document.getElementById("reg-handle").value;
       const preview = document.getElementById("reg-preview");
-      if (!val.trim()) { preview.textContent = "ຕົວຢ່າງ: name.dev@mdc.http"; preview.style.color = "var(--text-muted)"; return; }
+      if (!val.trim()) { preview.textContent = "ຕົວຢ່າງ: santoi@mdc.http"; preview.style.color = "var(--text-muted)"; return; }
       const res = normalizeMdcEmail(val);
       preview.textContent = res.valid ? "✓ ໃຊ້ໄດ້: " + res.email : "✕ ໃຊ້ໄດ້ສະເພາະ a-z, 0-9, . _ - (3–32 ຕົວ)";
       preview.style.color = res.valid ? "var(--accent)" : "var(--warning)";
@@ -580,7 +677,11 @@
       localStorage.removeItem(SESSION_KEY);
       sessionStorage.removeItem(SESSION_KEY);
       leaveVoiceChannel();
+      if (dataConn) { dataConn.close(); dataConn = null; }
       if (peer) { peer.destroy(); peer = null; }
+      state.myPeerId = "";
+      state.syncedPeerId = "";
+      state.syncedPeerName = "";
       document.getElementById("login-password").value = "";
       closeAuthLogModal();
       document.getElementById("app-workspace").classList.add("hidden");
@@ -588,29 +689,45 @@
       showAuthAlert("ອອກຈາກລະບົບ ແລະ ບັນທຶກປະຫວັດ Logout ແລ້ວ", "success");
     }
 
-    /* ================= DEFAULT DATA & STATE ================= */
+    /* ================= DEFAULT DATA & PERSISTENCE ================= */
     const DEFAULT_CHANNELS = [
       { id: "ch_text_general", type: "text", parentId: null, name: "ແຊັດທົ່ວໄປ", desc: "ສົນທະນາທົ່ວໄປໃນທີມ", neededJoinPower: 0 },
       { id: "ch_text_dev", type: "text", parentId: null, name: "dev-chat", desc: "ແລກປ່ຽນໂຄ້ດ ແລະ ແຈ້ງບັກ", neededJoinPower: 0 },
       { id: "ch_post_news", type: "post", parentId: null, name: "ປະກາດ-ໂພສ", desc: "ໂພສຂ່າວສານ, ອັບເດດ ແລະ ຄອມເມັ້ນ", neededJoinPower: 0 },
-      { id: "ch_voice_general", type: "voice", parentId: null, name: "General Voice", desc: "ຫ້ອງໂທສຽງຫຼັກ", neededJoinPower: 0 },
+      { id: "ch_voice_general", type: "voice", parentId: null, name: "General Voice", desc: "ຫ້ອງໂທສຽງ & ວິດີໂອຫຼັກ", neededJoinPower: 0 },
       { id: "ch_voice_squad1", type: "voice", parentId: null, name: "Squad 1", desc: "ຫ້ອງທີມ (Join Power 10)", neededJoinPower: 10 },
       { id: "ch_voice_sub_a", type: "voice", parentId: "ch_voice_squad1", name: "Sub-channel A", desc: "ຫ້ອງຍ່ອຍຍຸດທະວິທີ (Join Power 25)", neededJoinPower: 25 }
     ];
 
-    function loadChannels() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(CHANNELS_KEY));
-        return Array.isArray(saved) && saved.length ? saved : structuredClone(DEFAULT_CHANNELS);
-      } catch { return structuredClone(DEFAULT_CHANNELS); }
-    }
-    function saveChannels() { localStorage.setItem(CHANNELS_KEY, JSON.stringify(state.channels)); }
+    const DEFAULT_MESSAGES = {
+      ch_text_general: [{ id: "m_welcome_1", sender: "System", senderEmail: "", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ ແຊັດທົ່ວໄປ — ໂທ ຫຼື ເຊື່ອມຕໍ່ໝູ່ເພື່ອຊິ້ງຂໍ້ຄວາມແບບ Real-time", reply: null, reactions: { "👍": 1 }, edited: false }],
+      ch_voice_general: [{ id: "m_welcome_2", sender: "System", senderEmail: "", time: "09:00", text: "ພິມຊື່ @mdc.http ຂອງໝູ່ ຫຼື ກົດ 🔗 ລິ້ງເຊີນ ເພື່ອໂທສຽງ/ເປີດກ້ອງ ແລະ ຊິ້ງແຊັດ", reply: null, reactions: {}, edited: false }]
+    };
 
-    function loadFriends() {
-      try { return JSON.parse(localStorage.getItem(FRIENDS_KEY) || "[]"); }
-      catch { return []; }
+    const DEFAULT_POSTS = {
+      ch_post_news: [{
+        id: "p_v06_welcome", author: "System", authorEmail: "", time: "ມື້ນີ້", tag: "ອັບເດດ",
+        title: "ອັບເດດ v0.6 — ຊິ້ງແຊັດ/ໂພສ P2P + ເປີດກ້ອງ + ແກ້ໄຂ/ລົບໄດ້",
+        body: "ຕອນນີ້ສາມາດເປີດກ້ອງລະຫວ່າງໂທ, ແກ້ໄຂ-ລົບຂໍ້ຄວາມແຊັດ ແລະ ໂພສ, ແລະ ຊິ້ງໃຫ້ໝູ່ເຫັນແບບ Real-time ຜ່ານ PeerJS DataChannel ໄດ້ແລ້ວ.",
+        imageUrl: "", likes: 1, likedByMe: false, edited: false, comments: []
+      }]
+    };
+
+    function loadJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return structuredClone(fallback);
+        const parsed = JSON.parse(raw);
+        return parsed ?? structuredClone(fallback);
+      } catch { return structuredClone(fallback); }
     }
+
+    function saveChannels() { localStorage.setItem(CHANNELS_KEY, JSON.stringify(state.channels)); }
     function saveFriends() { localStorage.setItem(FRIENDS_KEY, JSON.stringify(state.friends)); }
+    function saveMessages() { localStorage.setItem(MESSAGES_KEY, JSON.stringify(state.messagesByChannel)); }
+    function savePosts() { localStorage.setItem(POSTS_KEY, JSON.stringify(state.postsByChannel)); }
+
+    const initialCallParam = new URLSearchParams(window.location.search).get("call");
 
     const state = {
       viewMode: "channel",
@@ -619,59 +736,114 @@
       connectedVoiceChannelId: null,
       voiceChatOpen: true,
       replyTo: null,
+      editingMessageId: null,
+      editingPostId: null,
       activePostTag: "All",
       isMuted: false,
       isDeafened: false,
       isPTT: false,
       pttPressed: false,
+      isCameraOn: false,
+      isRemoteCameraOn: false,
       isLocalSpeaking: false,
       isRemoteSpeaking: false,
-      callStatus: "ກຳລັງເຊື່ອມຕໍ່ PeerJS...",
+      callStatus: "ກຳລັງຈອງຊື່ໂທ...",
       inCall: false,
+      myPeerId: "",
       remotePeerId: null,
-      channels: loadChannels(),
-      friends: loadFriends(),
+      remoteDisplayName: "",
+      syncedPeerId: "",
+      syncedPeerName: "",
+      pendingInvite: initialCallParam ? initialCallParam.trim() : "",
+      channels: loadJson(CHANNELS_KEY, DEFAULT_CHANNELS),
+      friends: loadJson(FRIENDS_KEY, []),
       users: {
         me: { id: "me", name: "You", email: "", joinPower: 50, movePower: 50, neededMovePower: 50 }
       },
-      messagesByChannel: {
-        ch_text_general: [{ id: "m1", sender: "System", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ ແຊັດທົ່ວໄປ", reply: null, reactions: { "👍": 1 } }],
-        ch_voice_general: [{ id: "m3", sender: "System", time: "09:00", text: "ແຊັດຍ່ອຍປະຈຳຫ້ອງ General Voice", reply: null, reactions: {} }]
-      },
-      postsByChannel: {
-        ch_post_news: [{
-          id: "p1", author: "System", time: "ມື້ນີ້", tag: "ອັບເດດ",
-          title: "ອັບເດດ v0.4.2 — ເຂົ້າ/ອອກຫ້ອງສຽງ + STUN + Friends",
-          body: "ເພີ່ມປຸ່ມອອກຈາກຫ້ອງສຽງທັງໃນ Dock ແລະ Sidebar, ລະບົບໝູ່ເພື່ອນ (Add/Remove/Block), ແລະ STUN Server ສຳລັບໂທສຽງ.",
-          imageUrl: "", likes: 1, likedByMe: false, comments: []
-        }]
-      }
+      messagesByChannel: loadJson(MESSAGES_KEY, DEFAULT_MESSAGES),
+      postsByChannel: loadJson(POSTS_KEY, DEFAULT_POSTS)
     };
+
+    /* ================= INVITE LINK & COPY ================= */
+    function copyMyHandle() {
+      const handle = peerIdToHandle(state.myPeerId) || state.users.me.email;
+      navigator.clipboard.writeText(handle);
+      showToast("📋 ກັອບປີ້ຊື່ໂທແລ້ວ: " + handle);
+    }
+
+    function copyInviteLink() {
+      const shortHandle = peerIdToShortHandle(state.myPeerId);
+      if (!shortHandle) return showToast("ລໍຖ້າເຊື່ອມຕໍ່ຊື່ໂທຈັກຄາວ...");
+      const base = window.location.origin + window.location.pathname;
+      const url = `${base}?call=${encodeURIComponent(shortHandle)}`;
+      navigator.clipboard.writeText(url);
+      showToast("🔗 ກັອບລິ້ງເຊີນແລ້ວ — ສົ່ງໃຫ້ໝູ່ກົດໂທໄດ້ເລີຍ!");
+    }
+
+    function renderInviteBanner() {
+      const banner = document.getElementById("invite-banner");
+      const label = document.getElementById("invite-caller-label");
+      if (!banner || !label) return;
+      if (state.pendingInvite && handleToPeerId(state.pendingInvite) !== state.myPeerId) {
+        const display = state.pendingInvite.includes("@") ? state.pendingInvite : state.pendingInvite + DOMAIN;
+        label.textContent = display;
+        banner.classList.remove("hidden");
+      } else {
+        banner.classList.add("hidden");
+      }
+    }
+
+    function acceptInviteCall() {
+      const target = state.pendingInvite;
+      dismissInvite();
+      if (!target) return;
+      callFriendByHandle(target);
+    }
+
+    function dismissInvite() {
+      state.pendingInvite = "";
+      renderInviteBanner();
+      if (window.location.search.includes("call=")) {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
 
     /* ================= FRIENDS LOGIC ================= */
     function openFriendsView() { state.viewMode = "friends"; renderAll(); }
     function setFriendTab(tab) { state.friendTab = tab; renderStageBody(); }
+
     function addFriend(event) {
       event.preventDefault();
       const name = document.getElementById("friend-name-input").value.trim();
-      const peerId = document.getElementById("friend-peer-input").value.trim();
-      const email = document.getElementById("friend-email-input").value.trim();
-      if (!name || !peerId) return alert("ກະລຸນາໃສ່ຊື່ໝູ່ ແລະ Peer ID");
-      if (state.friends.some(f => f.peerId === peerId)) return alert("Peer ID ນີ້ມີໃນລາຍຊື່ໝູ່ແລ້ວ");
-      state.friends.unshift({ id: "fr_" + Date.now(), name, peerId, email: email || "", blocked: false, addedAt: nowTime() });
+      const rawHandle = document.getElementById("friend-handle-input").value.trim();
+      const peerId = handleToPeerId(rawHandle);
+      if (!name || !peerId) return alert("ກະລຸນາໃສ່ຊື່ໝູ່ ແລະ ຊື່ໂທ (ເຊັ່ນ leo ຫຼື leo@mdc.http)");
+      if (state.friends.some(f => f.peerId === peerId)) return alert("ໝູ່ຄົນນີ້ມີໃນລາຍຊື່ແລ້ວ");
+
+      state.friends.unshift({
+        id: "fr_" + Date.now(), name, peerId, email: peerIdToHandle(peerId), blocked: false, addedAt: nowTime()
+      });
       saveFriends();
+      showToast("✓ ເພີ່ມໝູ່ " + name + " ແລ້ວ");
       renderAll();
     }
+
     function quickAddCurrentRemoteFriend() {
-      const targetId = state.remotePeerId || (document.getElementById("remote-id-input")?.value.trim() || "");
-      if (!targetId) return alert("ກະລຸນາໃສ່ Peer ID ກ່ອນ");
-      if (state.friends.some(f => f.peerId === targetId)) return alert("ID ນີ້ຢູ່ໃນລາຍຊື່ໝູ່ແລ້ວ");
-      const name = prompt("ຕັ້ງຊື່ໃຫ້ໝູ່ຄົນນີ້:");
+      const rawTarget = state.remotePeerId || state.syncedPeerId || (document.getElementById("remote-id-input")?.value.trim() || "");
+      const targetPeerId = handleToPeerId(rawTarget);
+      if (!targetPeerId) return alert("ກະລຸນາພິມຊື່ໂທຂອງໝູ່ກ່ອນ (ເຊັ່ນ leo@mdc.http)");
+      if (state.friends.some(f => f.peerId === targetPeerId)) return showToast("ໝູ່ຄົນນີ້ຢູ່ໃນລາຍຊື່ແລ້ວ");
+      const defaultName = state.remoteDisplayName || state.syncedPeerName || peerIdToShortHandle(targetPeerId);
+      const name = prompt("ຕັ້ງຊື່ໃຫ້ໝູ່ຄົນນີ້:", defaultName);
       if (!name || !name.trim()) return;
-      state.friends.unshift({ id: "fr_" + Date.now(), name: name.trim(), peerId: targetId, email: "", blocked: false, addedAt: nowTime() });
+      state.friends.unshift({
+        id: "fr_" + Date.now(), name: name.trim(), peerId: targetPeerId, email: peerIdToHandle(targetPeerId), blocked: false, addedAt: nowTime()
+      });
       saveFriends();
+      showToast("✓ ບັນທຶກ " + name.trim() + " ເປັນໝູ່ແລ້ວ");
       renderAll();
     }
+
     function removeFriend(friendId) {
       const f = state.friends.find(x => x.id === friendId);
       if (!f) return;
@@ -680,20 +852,31 @@
       saveFriends();
       renderAll();
     }
+
     function toggleBlockFriend(friendId) {
       const f = state.friends.find(x => x.id === friendId);
       if (!f) return;
       f.blocked = !f.blocked;
       saveFriends();
-      if (f.blocked && state.inCall && state.remotePeerId === f.peerId) hangUp();
+      if (f.blocked) {
+        if (state.inCall && state.remotePeerId === f.peerId) hangUp();
+        if (dataConn && dataConn.peer === f.peerId) { dataConn.close(); dataConn = null; }
+      }
       renderAll();
     }
+
     function isPeerBlocked(peerId) { return state.friends.some(f => f.peerId === peerId && f.blocked); }
     function getFriendNameByPeer(peerId) {
       const f = state.friends.find(x => x.peerId === peerId);
-      return f ? f.name : (peerId ? peerId.slice(0, 8) + "..." : "Remote");
+      if (f) return f.name;
+      if (state.remotePeerId === peerId && state.remoteDisplayName) return state.remoteDisplayName;
+      if (state.syncedPeerId === peerId && state.syncedPeerName) return state.syncedPeerName;
+      return peerIdToShortHandle(peerId) || "Remote";
     }
-    function callFriendById(peerId) {
+
+    function callFriendByHandle(rawHandleOrPeerId) {
+      const peerId = handleToPeerId(rawHandleOrPeerId);
+      if (!peerId) return alert("ຊື່ໂທບໍ່ຖືກຕ້ອງ");
       if (isPeerBlocked(peerId)) return alert("ໝູ່ຄົນນີ້ຖືກ Block ຢູ່ — ກະລຸນາປົດ Block ກ່ອນໂທ");
       const voiceCh = state.channels.find(c => c.id === state.connectedVoiceChannelId && c.type === "voice")
         || state.channels.find(c => c.type === "voice");
@@ -703,14 +886,290 @@
         state.connectedVoiceChannelId = voiceCh.id;
         renderAll();
       }
-      startCall(peerId);
+      startCall(rawHandleOrPeerId);
     }
 
-    /* ================= PEERJS & VOICE ACTIVITY ================= */
+    /* ================= PEERJS DATA SYNC (CHAT & POSTS REAL-TIME) ================= */
     let peer = null;
-    let localStream = null;
+    let dataConn = null;
+    let localAudioStream = null;
+    let cameraStream = null;
+    let localCombinedStream = null;
+    let remoteMediaStream = null;
     let currentCall = null;
     let audioCtx = null;
+    let idRetryCount = 0;
+
+    function sendData(payload) {
+      if (dataConn && dataConn.open) {
+        try { dataConn.send(payload); } catch (e) { console.warn("Data send error:", e); }
+      }
+    }
+
+    function connectDataChannel(targetPeerId) {
+      if (!peer || !targetPeerId || targetPeerId === state.myPeerId) return;
+      if (dataConn && dataConn.open && dataConn.peer === targetPeerId) return;
+      if (dataConn) { try { dataConn.close(); } catch {} }
+      const conn = peer.connect(targetPeerId, {
+        reliable: true,
+        metadata: { name: state.users.me.name, email: state.users.me.email }
+      });
+      setupDataConnection(conn);
+    }
+
+    function setupDataConnection(conn) {
+      if (isPeerBlocked(conn.peer)) { conn.close(); return; }
+      dataConn = conn;
+
+      conn.on("open", () => {
+        state.syncedPeerId = conn.peer;
+        state.syncedPeerName = conn.metadata?.name || getFriendNameByPeer(conn.peer);
+        showToast("🟢 ຊິ້ງແຊັດ & ໂພສກັບ " + state.syncedPeerName + " ແລ້ວ");
+        sendData({
+          type: "hello_sync",
+          name: state.users.me.name,
+          email: state.users.me.email,
+          cameraOn: state.isCameraOn,
+          messagesByChannel: state.messagesByChannel,
+          postsByChannel: state.postsByChannel
+        });
+        renderStageHeader();
+      });
+
+      conn.on("data", handleIncomingData);
+
+      conn.on("close", () => {
+        if (dataConn === conn) {
+          dataConn = null;
+          state.syncedPeerId = "";
+          state.syncedPeerName = "";
+          state.isRemoteCameraOn = false;
+          renderStageHeader();
+        }
+      });
+    }
+
+    function mergeById(localArr, remoteArr, prepend = false) {
+      const map = new Map();
+      (localArr || []).forEach(item => map.set(item.id, item));
+      (remoteArr || []).forEach(item => {
+        if (!map.has(item.id)) map.set(item.id, item);
+      });
+      const merged = Array.from(map.values());
+      return prepend ? merged : merged;
+    }
+
+    function handleIncomingData(data) {
+      if (!data || !data.type) return;
+
+      if (data.type === "hello_sync") {
+        if (data.name) {
+          state.syncedPeerName = data.name;
+          if (state.remotePeerId === state.syncedPeerId) state.remoteDisplayName = data.name;
+        }
+        state.isRemoteCameraOn = !!data.cameraOn;
+        if (data.messagesByChannel) {
+          Object.entries(data.messagesByChannel).forEach(([chId, list]) => {
+            state.messagesByChannel[chId] = mergeById(state.messagesByChannel[chId], list);
+          });
+          saveMessages();
+        }
+        if (data.postsByChannel) {
+          Object.entries(data.postsByChannel).forEach(([chId, list]) => {
+            state.postsByChannel[chId] = mergeById(state.postsByChannel[chId], list);
+          });
+          savePosts();
+        }
+        renderAll();
+        return;
+      }
+
+      if (data.type === "video_state") {
+        state.isRemoteCameraOn = !!data.active;
+        renderStageBody();
+        return;
+      }
+
+      if (data.type === "chat_new") {
+        const list = state.messagesByChannel[data.channelId] || [];
+        if (!list.some(m => m.id === data.message.id)) {
+          list.push(data.message);
+          state.messagesByChannel[data.channelId] = list;
+          saveMessages();
+          renderStageBody();
+        }
+        return;
+      }
+
+      if (data.type === "chat_edit") {
+        const list = state.messagesByChannel[data.channelId] || [];
+        const msg = list.find(m => m.id === data.msgId);
+        if (msg) {
+          msg.text = data.text;
+          msg.edited = true;
+          saveMessages();
+          renderStageBody();
+        }
+        return;
+      }
+
+      if (data.type === "chat_delete") {
+        const list = state.messagesByChannel[data.channelId] || [];
+        state.messagesByChannel[data.channelId] = list.filter(m => m.id !== data.msgId);
+        saveMessages();
+        renderStageBody();
+        return;
+      }
+
+      if (data.type === "chat_react") {
+        const msg = (state.messagesByChannel[data.channelId] || []).find(m => m.id === data.msgId);
+        if (msg) {
+          msg.reactions[data.emoji] = (msg.reactions[data.emoji] || 0) + 1;
+          saveMessages();
+          renderStageBody();
+        }
+        return;
+      }
+
+      if (data.type === "post_new") {
+        const list = state.postsByChannel[data.channelId] || [];
+        if (!list.some(p => p.id === data.post.id)) {
+          list.unshift(data.post);
+          state.postsByChannel[data.channelId] = list;
+          savePosts();
+          renderStageBody();
+        }
+        return;
+      }
+
+      if (data.type === "post_edit") {
+        const post = (state.postsByChannel[data.channelId] || []).find(p => p.id === data.postId);
+        if (post) {
+          post.title = data.title;
+          post.body = data.body;
+          post.tag = data.tag;
+          post.imageUrl = data.imageUrl;
+          post.edited = true;
+          savePosts();
+          renderStageBody();
+        }
+        return;
+      }
+
+      if (data.type === "post_delete") {
+        const list = state.postsByChannel[data.channelId] || [];
+        state.postsByChannel[data.channelId] = list.filter(p => p.id !== data.postId);
+        savePosts();
+        renderStageBody();
+        return;
+      }
+
+      if (data.type === "post_like") {
+        const post = (state.postsByChannel[data.channelId] || []).find(p => p.id === data.postId);
+        if (post) {
+          post.likes = Math.max(0, (post.likes || 0) + data.delta);
+          savePosts();
+          renderStageBody();
+        }
+        return;
+      }
+
+      if (data.type === "post_comment") {
+        const post = (state.postsByChannel[data.channelId] || []).find(p => p.id === data.postId);
+        if (post) {
+          post.comments.push(data.comment);
+          savePosts();
+          renderStageBody();
+        }
+        return;
+      }
+    }
+
+    /* ================= CAMERA & WEBRTC STREAM HELPERS ================= */
+    function createDummyVideoTrack() {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 2;
+        canvas.height = 2;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, 2, 2);
+        const track = canvas.captureStream(1).getVideoTracks()[0];
+        if (track) track.enabled = false;
+        return track;
+      } catch {
+        return null;
+      }
+    }
+
+    async function buildLocalCallStream() {
+      localAudioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      const tracks = [...localAudioStream.getAudioTracks()];
+      if (state.isCameraOn && cameraStream && cameraStream.getVideoTracks()[0]) {
+        tracks.push(cameraStream.getVideoTracks()[0]);
+      } else {
+        const dummy = createDummyVideoTrack();
+        if (dummy) tracks.push(dummy);
+      }
+      localCombinedStream = new MediaStream(tracks);
+      applyAudioTrackStates();
+      startSpeakingMonitor(localAudioStream, true);
+      return localCombinedStream;
+    }
+
+    async function toggleCamera() {
+      if (!state.isCameraOn) {
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 360 } }
+          });
+          const camTrack = cameraStream.getVideoTracks()[0];
+          state.isCameraOn = true;
+
+          if (currentCall && currentCall.peerConnection) {
+            const videoSender = currentCall.peerConnection.getSenders().find(s => s.track && s.track.kind === "video");
+            if (videoSender) {
+              await videoSender.replaceTrack(camTrack);
+            }
+          }
+          sendData({ type: "video_state", active: true });
+          renderStageBody();
+        } catch (err) {
+          alert("ບໍ່ສາມາດເປີດກ້ອງໄດ້: " + err.message);
+        }
+      } else {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop());
+          cameraStream = null;
+        }
+        state.isCameraOn = false;
+
+        if (currentCall && currentCall.peerConnection) {
+          const videoSender = currentCall.peerConnection.getSenders().find(s => s.track && s.track.kind === "video");
+          const dummy = createDummyVideoTrack();
+          if (videoSender && dummy) {
+            await videoSender.replaceTrack(dummy);
+          }
+        }
+        sendData({ type: "video_state", active: false });
+        renderStageBody();
+      }
+    }
+
+    function attachMediaStreamsToUI() {
+      const localVid = document.getElementById("local-video");
+      if (localVid && state.isCameraOn && cameraStream) {
+        if (localVid.srcObject !== cameraStream) localVid.srcObject = cameraStream;
+        localVid.play().catch(() => {});
+      }
+      const remoteVid = document.getElementById("remote-video");
+      if (remoteVid && state.isRemoteCameraOn && remoteMediaStream) {
+        if (remoteVid.srcObject !== remoteMediaStream) remoteVid.srcObject = remoteMediaStream;
+        remoteVid.play().catch(() => {});
+      }
+    }
 
     function startSpeakingMonitor(stream, isLocal) {
       try {
@@ -747,9 +1206,11 @@
       if (localMini) localMini.classList.toggle("speaking", state.isLocalSpeaking);
     }
 
-    function initPeer() {
-      if (peer) return;
-      peer = new Peer({
+    function initPeer(customIdOverride = null) {
+      if (peer && !peer.destroyed) peer.destroy();
+      const desiredId = customIdOverride || handleToPeerId(state.users.me.email);
+
+      peer = new Peer(desiredId || undefined, {
         config: {
           iceServers: [
             { urls: "stun:stun.l.google.com:19302" },
@@ -759,20 +1220,39 @@
       });
 
       peer.on("open", id => {
-        document.getElementById("my-peer-id").innerText = id;
-        state.callStatus = "🟢 ພ້ອມໂທສຽງ";
+        idRetryCount = 0;
+        state.myPeerId = id;
+        document.getElementById("my-call-handle").innerText = peerIdToHandle(id);
+        state.callStatus = "🟢 ພ້ອມໂທສຽງ/ວິດີໂອ (ຊື່ໂທ: " + peerIdToShortHandle(id) + ")";
         renderStageHeader();
+        renderInviteBanner();
       });
+
+      peer.on("connection", conn => setupDataConnection(conn));
 
       peer.on("disconnected", () => {
         state.callStatus = "⚠️ ສັນຍານຫຼຸດ — ກຳລັງເຊື່ອມຕໍ່ໃໝ່...";
         renderStageHeader();
-        setTimeout(() => {
-          if (peer && !peer.destroyed) peer.reconnect();
-        }, 2000);
+        setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
       });
 
       peer.on("error", err => {
+        if (err.type === "unavailable-id") {
+          idRetryCount++;
+          if (idRetryCount <= 2) {
+            state.callStatus = "⏳ ກຳລັງຈອງຊື່ໂທຄືນ...";
+            renderStageHeader();
+            setTimeout(() => initPeer(desiredId), 2200);
+          } else {
+            initPeer(desiredId + "-" + Math.floor(100 + Math.random() * 900));
+          }
+          return;
+        }
+        if (err.type === "peer-unavailable") {
+          state.callStatus = "✕ ບໍ່ພົບຄູ່ສາຍ (ໝູ່ອາດຍັງບໍ່ໄດ້ເປີດໜ້າເວັບ)";
+          resetCallUI(false);
+          return;
+        }
         state.callStatus = "Error: " + err.type;
         renderStageHeader();
       });
@@ -785,50 +1265,52 @@
           return;
         }
         try {
-          state.callStatus = "ກຳລັງຮັບສາຍ...";
           state.remotePeerId = call.peer;
+          state.remoteDisplayName = call.metadata?.name || peerIdToShortHandle(call.peer);
+          state.callStatus = "ກຳລັງຮັບສາຍຈາກ " + getFriendNameByPeer(call.peer) + "...";
           if (!state.connectedVoiceChannelId) {
             const firstVoice = state.channels.find(c => c.type === "voice");
             if (firstVoice) state.connectedVoiceChannelId = firstVoice.id;
           }
           renderStageHeader();
-          localStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-          });
-          applyAudioTrackStates();
-          startSpeakingMonitor(localStream, true);
-          call.answer(localStream);
+          const stream = await buildLocalCallStream();
+          call.answer(stream);
           setupCallEvents(call);
+          connectDataChannel(call.peer);
         } catch (err) {
           alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
         }
       });
     }
 
-    async function startCall(explicitPeerId = null) {
-      const input = document.getElementById("remote-id-input");
-      const friendId = (explicitPeerId || (input ? input.value.trim() : "")).trim();
-      const myId = document.getElementById("my-peer-id").innerText.trim();
+    window.addEventListener("beforeunload", () => {
+      if (peer && !peer.destroyed) peer.destroy();
+    });
 
-      if (!friendId) return alert("ກະລຸນາໃສ່ ID ຂອງໝູ່ ຫຼື ເລືອກຈາກລາຍຊື່ໝູ່");
-      if (friendId === myId) return alert("ບໍ່ສາມາດໂທຫາ ID ຂອງຕົວເອງໄດ້ — ໃຫ້ວາງ ID ຂອງເຄື່ອງໝູ່");
-      if (isPeerBlocked(friendId)) return alert("Peer ID ນີ້ຖືກ Block ຢູ່");
+    async function startCall(explicitTarget = null) {
+      const input = document.getElementById("remote-id-input");
+      const rawTarget = (explicitTarget || (input ? input.value.trim() : "")).trim();
+      if (!rawTarget) return alert("ກະລຸນາພິມຊື່ໝູ່ (ເຊັ່ນ leo ຫຼື leo@mdc.http)");
+
+      const targetPeerId = handleToPeerId(rawTarget);
+      if (!targetPeerId) return alert("ຮູບແບບຊື່ໂທບໍ່ຖືກຕ້ອງ (ໃຊ້ a-z, 0-9, . _ -)");
+      if (targetPeerId === state.myPeerId) return alert("ບໍ່ສາມາດໂທຫາຊື່ຂອງຕົວເອງໄດ້");
+      if (isPeerBlocked(targetPeerId)) return alert("ໝູ່ຄົນນີ້ຖືກ Block ຢູ່");
 
       const activeCh = state.channels.find(c => c.id === state.activeChannelId);
-      if (activeCh && activeCh.type === "voice") {
-        state.connectedVoiceChannelId = activeCh.id;
-      }
+      if (activeCh && activeCh.type === "voice") state.connectedVoiceChannelId = activeCh.id;
 
       try {
-        state.callStatus = "ກຳລັງໂທຫາ " + getFriendNameByPeer(friendId) + "...";
-        state.remotePeerId = friendId;
+        state.remotePeerId = targetPeerId;
+        state.remoteDisplayName = getFriendNameByPeer(targetPeerId);
+        state.callStatus = "ກຳລັງໂທຫາ " + state.remoteDisplayName + "...";
         renderStageHeader();
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+
+        connectDataChannel(targetPeerId);
+        const stream = await buildLocalCallStream();
+        const call = peer.call(targetPeerId, stream, {
+          metadata: { name: state.users.me.name, email: state.users.me.email }
         });
-        applyAudioTrackStates();
-        startSpeakingMonitor(localStream, true);
-        const call = peer.call(friendId, localStream);
         setupCallEvents(call);
       } catch (err) {
         alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
@@ -842,6 +1324,7 @@
       renderAll();
 
       call.on("stream", remoteStream => {
+        remoteMediaStream = remoteStream;
         const audioEl = document.getElementById("remote-audio");
         audioEl.srcObject = remoteStream;
         audioEl.muted = state.isDeafened;
@@ -853,29 +1336,33 @@
         renderAll();
       });
 
-      call.on("close", resetCallUI);
+      call.on("close", () => resetCallUI(true));
     }
 
     function hangUp() {
       if (currentCall) currentCall.close();
-      resetCallUI();
+      resetCallUI(true);
     }
 
-    function resetCallUI() {
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      localStream = null;
+    function resetCallUI(resetStatus = true) {
+      if (localAudioStream) localAudioStream.getTracks().forEach(t => t.stop());
+      localAudioStream = null;
+      localCombinedStream = null;
+      remoteMediaStream = null;
       currentCall = null;
       state.inCall = false;
       state.remotePeerId = null;
+      state.remoteDisplayName = "";
       state.isLocalSpeaking = false;
       state.isRemoteSpeaking = false;
-      state.callStatus = "🟢 ພ້ອມໂທສຽງ";
+      state.isRemoteCameraOn = false;
+      if (resetStatus) state.callStatus = "🟢 ພ້ອມໂທສຽງ/ວິດີໂອ (ຊື່ໂທ: " + peerIdToShortHandle(state.myPeerId) + ")";
       renderAll();
     }
 
     function applyAudioTrackStates() {
-      if (!localStream) return;
-      const track = localStream.getAudioTracks()[0];
+      if (!localAudioStream) return;
+      const track = localAudioStream.getAudioTracks()[0];
       if (!track) return;
       track.enabled = state.isPTT ? (!state.isMuted && state.pttPressed) : !state.isMuted;
     }
@@ -904,13 +1391,7 @@
       }
     });
 
-    function copyId() {
-      const id = document.getElementById("my-peer-id").innerText;
-      navigator.clipboard.writeText(id);
-      alert("ກັອບປີ້ ID ແລ້ວ: " + id);
-    }
-
-    /* ================= CHANNELS (JOIN / LEAVE / CREATE / DELETE) ================= */
+    /* ================= CHANNELS ================= */
     function canExecute(action, { targetChannelId = null } = {}) {
       const actor = state.users.me;
       if (action === "join_channel") {
@@ -934,6 +1415,8 @@
         if (!state.inCall) state.callStatus = "🟢 ຢູ່ໃນຫ້ອງສຽງແລ້ວ";
       }
       state.replyTo = null;
+      state.editingMessageId = null;
+      state.editingPostId = null;
       state.activePostTag = "All";
       renderAll();
     }
@@ -948,13 +1431,16 @@
 
     function leaveVoiceChannel() {
       if (currentCall) currentCall.close();
-      if (localStream) {
-        localStream.getTracks().forEach(t => t.stop());
-        localStream = null;
-      }
+      if (localAudioStream) { localAudioStream.getTracks().forEach(t => t.stop()); localAudioStream = null; }
+      if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+      localCombinedStream = null;
+      remoteMediaStream = null;
       currentCall = null;
       state.inCall = false;
+      state.isCameraOn = false;
+      state.isRemoteCameraOn = false;
       state.remotePeerId = null;
+      state.remoteDisplayName = "";
       state.isLocalSpeaking = false;
       state.isRemoteSpeaking = false;
       state.connectedVoiceChannelId = null;
@@ -979,8 +1465,11 @@
       const id = `ch_${type}_${Date.now()}`;
       state.channels.push({ id, type, parentId, name: name.trim(), desc: `ສ້າງໃໝ່ (${label})`, neededJoinPower: 0 });
       saveChannels();
-      if (type === "post") state.postsByChannel[id] = [];
-      else state.messagesByChannel[id] = [{ id: "sys_" + Date.now(), sender: "System", time: nowTime(), text: `ສ້າງຫ້ອງ "${name.trim()}" ແລ້ວ`, reply: null, reactions: {} }];
+      if (type === "post") { state.postsByChannel[id] = []; savePosts(); }
+      else {
+        state.messagesByChannel[id] = [{ id: "sys_" + Date.now(), sender: "System", senderEmail: "", time: nowTime(), text: `ສ້າງຫ້ອງ "${name.trim()}" ແລ້ວ`, reply: null, reactions: {}, edited: false }];
+        saveMessages();
+      }
 
       state.viewMode = "channel";
       state.activeChannelId = id;
@@ -1010,9 +1499,7 @@
       state.channels = state.channels.filter(c => !idsToRemove.has(c.id));
       saveChannels();
 
-      if (idsToRemove.has(state.connectedVoiceChannelId)) {
-        leaveVoiceChannel();
-      }
+      if (idsToRemove.has(state.connectedVoiceChannelId)) leaveVoiceChannel();
       if (idsToRemove.has(state.activeChannelId)) {
         const fallback = state.channels[0];
         state.activeChannelId = fallback ? fallback.id : null;
@@ -1020,19 +1507,66 @@
       renderAll();
     }
 
-    /* ================= CHAT & POSTS ================= */
+    /* ================= CHAT (CREATE / EDIT / DELETE + SYNC) ================= */
     function sendChatMessage(event) {
       event.preventDefault();
       const input = document.getElementById("chat-input");
       const text = input.value.trim();
       if (!text) return;
+      const msg = {
+        id: "m_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        sender: state.users.me.name,
+        senderEmail: state.users.me.email,
+        time: nowTime(),
+        text,
+        reply: state.replyTo,
+        reactions: {},
+        edited: false
+      };
       const list = state.messagesByChannel[state.activeChannelId] || [];
-      list.push({ id: "m_" + Date.now(), sender: state.users.me.name, time: nowTime(), text, reply: state.replyTo, reactions: {} });
+      list.push(msg);
       state.messagesByChannel[state.activeChannelId] = list;
+      saveMessages();
+      sendData({ type: "chat_new", channelId: state.activeChannelId, message: msg });
       state.replyTo = null;
       input.value = "";
       renderStageBody();
     }
+
+    function startEditMessage(msgId) {
+      state.editingMessageId = msgId;
+      renderStageBody();
+      document.getElementById("edit-msg-input")?.focus();
+    }
+    function cancelEditMessage() {
+      state.editingMessageId = null;
+      renderStageBody();
+    }
+    function saveEditMessage(event, msgId) {
+      event.preventDefault();
+      const input = document.getElementById("edit-msg-input");
+      const newText = input ? input.value.trim() : "";
+      if (!newText) return;
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      const msg = list.find(m => m.id === msgId);
+      if (!msg) return;
+      msg.text = newText;
+      msg.edited = true;
+      state.editingMessageId = null;
+      saveMessages();
+      sendData({ type: "chat_edit", channelId: state.activeChannelId, msgId, text: newText });
+      renderStageBody();
+    }
+
+    function deleteChatMessage(msgId) {
+      if (!confirm("ຕ້ອງການລົບຂໍ້ຄວາມນີ້ແທ້ບໍ່?")) return;
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      state.messagesByChannel[state.activeChannelId] = list.filter(m => m.id !== msgId);
+      saveMessages();
+      sendData({ type: "chat_delete", channelId: state.activeChannelId, msgId });
+      renderStageBody();
+    }
+
     function setReplyTo(msgId) {
       const target = (state.messagesByChannel[state.activeChannelId] || []).find(m => m.id === msgId);
       if (!target) return;
@@ -1041,12 +1575,17 @@
       document.getElementById("chat-input")?.focus();
     }
     function clearReply() { state.replyTo = null; renderStageBody(); }
+
     function toggleReaction(msgId, emoji) {
       const msg = (state.messagesByChannel[state.activeChannelId] || []).find(m => m.id === msgId);
       if (!msg) return;
       msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
+      saveMessages();
+      sendData({ type: "chat_react", channelId: state.activeChannelId, msgId, emoji });
       renderStageBody();
     }
+
+    /* ================= POSTS (CREATE / EDIT / DELETE + SYNC) ================= */
     function createPost(event) {
       event.preventDefault();
       const title = document.getElementById("post-title").value.trim();
@@ -1054,18 +1593,71 @@
       const tag = document.getElementById("post-tag").value;
       const imageUrl = document.getElementById("post-img").value.trim();
       if (!title || !body) return alert("ກະລຸນາໃສ່ຫົວຂໍ້ ແລະ ເນື້ອຫາໂພສ");
+      const post = {
+        id: "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        author: state.users.me.name,
+        authorEmail: state.users.me.email,
+        time: nowTime(),
+        tag, title, body, imageUrl,
+        likes: 0, likedByMe: false, edited: false, comments: []
+      };
       const list = state.postsByChannel[state.activeChannelId] || [];
-      list.unshift({ id: "p_" + Date.now(), author: state.users.me.name, time: nowTime(), tag, title, body, imageUrl, likes: 0, likedByMe: false, comments: [] });
+      list.unshift(post);
       state.postsByChannel[state.activeChannelId] = list;
+      savePosts();
+      sendData({ type: "post_new", channelId: state.activeChannelId, post });
       renderStageBody();
     }
+
+    function startEditPost(postId) {
+      state.editingPostId = postId;
+      renderStageBody();
+    }
+    function cancelEditPost() {
+      state.editingPostId = null;
+      renderStageBody();
+    }
+    function saveEditPost(event, postId) {
+      event.preventDefault();
+      const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
+      if (!post) return;
+      const title = document.getElementById("edit-post-title").value.trim();
+      const body = document.getElementById("edit-post-body").value.trim();
+      const tag = document.getElementById("edit-post-tag").value;
+      const imageUrl = document.getElementById("edit-post-img").value.trim();
+      if (!title || !body) return alert("ຫົວຂໍ້ ແລະ ເນື້ອຫາຫ້າມວ່າງ");
+
+      post.title = title;
+      post.body = body;
+      post.tag = tag;
+      post.imageUrl = imageUrl;
+      post.edited = true;
+      state.editingPostId = null;
+      savePosts();
+      sendData({ type: "post_edit", channelId: state.activeChannelId, postId, title, body, tag, imageUrl });
+      renderStageBody();
+    }
+
+    function deletePost(postId) {
+      if (!confirm("ຕ້ອງການລົບໂພສນີ້ແທ້ບໍ່?")) return;
+      const list = state.postsByChannel[state.activeChannelId] || [];
+      state.postsByChannel[state.activeChannelId] = list.filter(p => p.id !== postId);
+      savePosts();
+      sendData({ type: "post_delete", channelId: state.activeChannelId, postId });
+      renderStageBody();
+    }
+
     function toggleLikePost(postId) {
       const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
       if (!post) return;
       post.likedByMe = !post.likedByMe;
-      post.likes += post.likedByMe ? 1 : -1;
+      const delta = post.likedByMe ? 1 : -1;
+      post.likes = Math.max(0, (post.likes || 0) + delta);
+      savePosts();
+      sendData({ type: "post_like", channelId: state.activeChannelId, postId, delta });
       renderStageBody();
     }
+
     function addComment(event, postId) {
       event.preventDefault();
       const input = event.target.querySelector("input");
@@ -1073,9 +1665,13 @@
       if (!text) return;
       const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
       if (!post) return;
-      post.comments.push({ author: state.users.me.name, text });
+      const comment = { id: "c_" + Date.now(), author: state.users.me.name, text };
+      post.comments.push(comment);
+      savePosts();
+      sendData({ type: "post_comment", channelId: state.activeChannelId, postId, comment });
       renderStageBody();
     }
+
     function setPostTagFilter(tag) { state.activePostTag = tag; renderStageBody(); }
 
     /* ================= RENDERERS ================= */
@@ -1121,12 +1717,12 @@
               occ.innerHTML = `
                 <div class="voice-occ-item">
                   <span id="mini-avatar-local" class="mini-avatar ${state.isLocalSpeaking ? "speaking" : ""}">${escapeHtml(initials(me.name))}</span>
-                  <span>${escapeHtml(me.name)} ${state.isMuted ? "🔇" : ""}</span>
+                  <span>${escapeHtml(me.name)} ${state.isMuted ? "🔇" : ""} ${state.isCameraOn ? "📹" : ""}</span>
                 </div>
                 ${state.inCall && state.remotePeerId ? `
                   <div class="voice-occ-item">
                     <span class="mini-avatar ${state.isRemoteSpeaking ? "speaking" : ""}">${escapeHtml(initials(getFriendNameByPeer(state.remotePeerId)))}</span>
-                    <span>${escapeHtml(getFriendNameByPeer(state.remotePeerId))}</span>
+                    <span>${escapeHtml(getFriendNameByPeer(state.remotePeerId))} ${state.isRemoteCameraOn ? "📹" : ""}</span>
                   </div>` : ""}
               `;
               nav.appendChild(occ);
@@ -1138,26 +1734,26 @@
         renderLevel(null);
       });
 
-      // ອັບເດດແຖບສະຖານະ Voice + ປຸ່ມອອກຫ້ອງຢູ່ Sidebar
       const vBar = document.getElementById("voice-status-bar");
       const vName = document.getElementById("voice-status-name");
       if (vBar && vName) {
         const connCh = state.channels.find(c => c.id === state.connectedVoiceChannelId);
-        if (connCh) {
-          vName.innerText = connCh.name;
-          vBar.classList.remove("hidden");
-        } else {
-          vBar.classList.add("hidden");
-        }
+        if (connCh) { vName.innerText = connCh.name; vBar.classList.remove("hidden"); }
+        else { vBar.classList.add("hidden"); }
       }
     }
 
     function renderStageHeader() {
       const actions = document.getElementById("header-actions");
+      const syncPill = state.syncedPeerId
+        ? `<span class="badge badge-sync">🟢 ຊິ້ງກັບ ${escapeHtml(state.syncedPeerName || getFriendNameByPeer(state.syncedPeerId))}</span>`
+        : `<span class="badge">⚪ ຍັງບໍ່ໄດ້ຊິ້ງກັບໝູ່ (ໂທຫາໝູ່ເພື່ອຊິ້ງ)</span>`;
+
       if (state.viewMode === "friends") {
         document.getElementById("active-channel-title").innerText = "👥 ໝູ່ເພື່ອນ (Friends)";
-        document.getElementById("active-channel-sub").innerText = "ເພີ່ມໝູ່, ໂທຫາດ່ວນ, ລົບ ຫຼື Block";
+        document.getElementById("active-channel-sub").innerText = "ເພີ່ມໝູ່ດ້ວຍຊື່ @mdc.http ແລ້ວກົດໂທຫາ ຫຼື ຊິ້ງແຊັດໄດ້ທັນທີ";
         actions.innerHTML = `
+          ${syncPill}
           <button type="button" class="tag-pill ${state.friendTab === "all" ? "active" : ""}" onclick="setFriendTab('all')">ທັງໝົດ (${state.friends.filter(f => !f.blocked).length})</button>
           <button type="button" class="tag-pill ${state.friendTab === "blocked" ? "active" : ""}" onclick="setFriendTab('blocked')">ບລັອກແລ້ວ (${state.friends.filter(f => f.blocked).length})</button>
         `;
@@ -1169,23 +1765,40 @@
       document.getElementById("active-channel-title").innerText = (ch.type === "voice" ? "🔊 " : ch.type === "text" ? "# " : "▤ ") + ch.name;
       document.getElementById("active-channel-sub").innerText = ch.type === "voice" ? state.callStatus : ch.desc;
       actions.innerHTML = ch.type === "voice"
-        ? `<button type="button" class="btn-small" onclick="toggleVoiceChatDrawer()">💬 ${state.voiceChatOpen ? "ເຊື່ອງແຊັດ" : "ເປີດແຊັດ"}</button>`
-        : `<span class="badge">${ch.type === "text" ? "Text Channel" : "Forum / Post"}</span>`;
+        ? `${syncPill}<button type="button" class="btn-small" onclick="toggleVoiceChatDrawer()">💬 ${state.voiceChatOpen ? "ເຊື່ອງແຊັດ" : "ເປີດແຊັດ"}</button>`
+        : `${syncPill}<span class="badge">${ch.type === "text" ? "Text Channel" : "Forum / Post"}</span>`;
     }
 
     function renderChatSection(channelId) {
       const list = state.messagesByChannel[channelId] || [];
+      const me = state.users.me;
+
       const feedHtml = list.map(m => {
+        const isMine = (m.senderEmail && m.senderEmail === me.email) || m.sender === me.name;
+        const isEditing = state.editingMessageId === m.id;
         const reacts = Object.entries(m.reactions || {})
           .map(([emoji, count]) => `<button type="button" class="react-btn" onclick="toggleReaction('${m.id}','${emoji}')">${emoji} ${count}</button>`).join("");
+
         return `
           <div class="msg-item">
             <div class="msg-top">
-              <span class="msg-meta"><strong>${escapeHtml(m.sender)}</strong>${escapeHtml(m.time)}</span>
-              <button type="button" class="btn-small" onclick="setReplyTo('${m.id}')">ຕອບກັບ</button>
+              <span class="msg-meta">
+                <strong>${escapeHtml(m.sender)}</strong>${escapeHtml(m.time)}
+                ${m.edited ? `<span class="edited-tag">(ແກ້ໄຂແລ້ວ)</span>` : ""}
+              </span>
+              <div class="msg-top-btns">
+                <button type="button" class="btn-small" onclick="setReplyTo('${m.id}')">ຕອບກັບ</button>
+                ${isMine ? `<button type="button" class="btn-small" onclick="startEditMessage('${m.id}')">✏️ ແກ້ໄຂ</button>` : ""}
+                ${isMine || m.sender === "System" ? `<button type="button" class="btn-small btn-danger-soft" onclick="deleteChatMessage('${m.id}')">🗑️ ລົບ</button>` : ""}
+              </div>
             </div>
             ${m.reply ? `<div class="msg-reply-ref">↳ ${escapeHtml(m.reply.sender)}: ${escapeHtml(m.reply.text)}</div>` : ""}
-            <div>${escapeHtml(m.text)}</div>
+            ${isEditing ? `
+              <form class="inline-edit-form" onsubmit="saveEditMessage(event, '${m.id}')">
+                <input id="edit-msg-input" type="text" value="${escapeHtml(m.text)}" required />
+                <button type="submit" class="btn-small" style="background:var(--accent);color:#05261c;">ບັນທຶກ</button>
+                <button type="button" class="btn-small" onclick="cancelEditMessage()">ຍົກເລີກ</button>
+              </form>` : `<div>${escapeHtml(m.text)}</div>`}
             <div class="msg-actions">
               ${reacts}
               <button type="button" class="react-btn hover-only" onclick="toggleReaction('${m.id}','👍')">+👍</button>
@@ -1212,11 +1825,10 @@
         body.innerHTML = `
           <div class="friends-layout">
             <form class="add-friend-card" onsubmit="addFriend(event)">
-              <strong style="font-size: 14px;">➕ ເພີ່ມໝູ່ໃໝ່ (Add Friend)</strong>
+              <strong style="font-size: 14px;">➕ ເພີ່ມໝູ່ໃໝ່ (ໃຊ້ຊື່ @mdc.http ຖາວອນ)</strong>
               <div class="add-friend-row">
-                <input id="friend-name-input" type="text" placeholder="ຊື່ໝູ່ (ເຊັ່ນ Leo)" required />
-                <input id="friend-peer-input" type="text" placeholder="Peer ID ຂອງໝູ່..." required />
-                <input id="friend-email-input" type="text" placeholder="name@mdc.http (ຖ້າມີ)" />
+                <input id="friend-name-input" type="text" placeholder="ຊື່ສະແດງ (ເຊັ່ນ Leo)" required />
+                <input id="friend-handle-input" type="text" placeholder="ຊື່ໂທ (ເຊັ່ນ leo ຫຼື leo@mdc.http)" required />
                 <button type="submit">ບັນທຶກໝູ່</button>
               </div>
             </form>
@@ -1227,16 +1839,17 @@
                   <div class="friend-avatar">${escapeHtml(initials(f.name))}</div>
                   <div>
                     <strong>${escapeHtml(f.name)} ${f.blocked ? '<span class="badge" style="color:#fca5a5;">Blocked</span>' : ""}</strong>
-                    <div class="user-email-mini">ID: ${escapeHtml(f.peerId)} ${f.email ? "• " + escapeHtml(f.email) : ""}</div>
+                    <div class="user-email-mini">${escapeHtml(f.email || peerIdToHandle(f.peerId))}</div>
                   </div>
                 </div>
                 <div class="friend-actions">
-                  ${!f.blocked ? `<button type="button" onclick="callFriendById('${escapeHtml(f.peerId)}')">📞 ໂທຫາ</button>` : ""}
+                  ${!f.blocked ? `<button type="button" onclick="callFriendByHandle('${escapeHtml(f.peerId)}')">📞 ໂທຫາ</button>` : ""}
+                  ${!f.blocked ? `<button type="button" class="btn-small" onclick="connectDataChannel('${escapeHtml(f.peerId)}')">💬 ຊິ້ງແຊັດ</button>` : ""}
                   <button type="button" class="btn-small" onclick="toggleBlockFriend('${f.id}')">${f.blocked ? "ປົດ Block" : "🚫 Block"}</button>
                   <button type="button" class="btn-small btn-danger-soft" onclick="removeFriend('${f.id}')">🗑️ ລົບໝູ່</button>
                 </div>
               </div>
-            `).join("") || `<div class="stage-sub">${state.friendTab === "blocked" ? "ຍັງບໍ່ມີລາຍຊື່ທີ່ຖືກ Block" : "ຍັງບໍ່ມີໝູ່ໃນລາຍຊື່ — ເພີ່ມໝູ່ດ້ານເທິງໄດ້ເລີຍ"}</div>`}
+            `).join("") || `<div class="stage-sub">${state.friendTab === "blocked" ? "ຍັງບໍ່ມີລາຍຊື່ທີ່ຖືກ Block" : "ຍັງບໍ່ມີໝູ່ໃນລາຍຊື່ — ເພີ່ມຊື່ @mdc.http ຂອງໝູ່ດ້ານເທິງໄດ້ເລີຍ"}</div>`}
           </div>
         `;
         return;
@@ -1249,31 +1862,35 @@
         const me = state.users.me;
         const activeFriends = state.friends.filter(f => !f.blocked);
         const remoteName = state.remotePeerId ? getFriendNameByPeer(state.remotePeerId) : null;
+        const remoteHandleDisplay = state.remotePeerId ? peerIdToHandle(state.remotePeerId) : "";
         const isInThisVoice = state.connectedVoiceChannelId === ch.id;
 
         body.innerHTML = `
           <div class="voice-workspace ${state.voiceChatOpen ? "" : "chat-closed"}">
             <section class="voice-stage-col">
-              <div class="voice-call-bar">
-                <input id="remote-id-input" type="text" placeholder="ວາງ Peer ID ຂອງເຄື່ອງໝູ່..." value="${escapeHtml(state.remotePeerId || "")}" style="flex:1; min-width:170px;" />
+              <form class="voice-call-bar" onsubmit="event.preventDefault(); startCall();">
+                <input id="remote-id-input" type="text" placeholder="ພິມຊື່ໝູ່ (ເຊັ່ນ leo ຫຼື leo@mdc.http)..." value="${escapeHtml(remoteHandleDisplay)}" style="flex:1; min-width:170px;" />
                 ${activeFriends.length ? `
-                  <select onchange="if(this.value) document.getElementById('remote-id-input').value = this.value">
-                    <option value="">-- ເລືອກຈາກໝູ່ --</option>
-                    ${activeFriends.map(f => `<option value="${escapeHtml(f.peerId)}">${escapeHtml(f.name)}</option>`).join("")}
+                  <select onchange="if(this.value) { document.getElementById('remote-id-input').value = this.value; startCall(this.value); }">
+                    <option value="">-- ໂທຫາໝູ່ທັນທີ --</option>
+                    ${activeFriends.map(f => `<option value="${escapeHtml(f.email || peerIdToHandle(f.peerId))}">${escapeHtml(f.name)}</option>`).join("")}
                   </select>` : ""}
                 ${!state.inCall
-                  ? `<button type="button" onclick="startCall()">📞 ໂທເຂົ້າຫ້ອງ</button>`
+                  ? `<button type="submit">📞 ໂທເຂົ້າຫ້ອງ</button>`
                   : `<button type="button" class="btn-danger" onclick="hangUp()">📵 ວາງສາຍ</button>`}
-                <button type="button" class="btn-small" onclick="quickAddCurrentRemoteFriend()" title="ບັນທຶກ ID ນີ້ເປັນໝູ່">+ Add ໝູ່</button>
-              </div>
+                <button type="button" class="btn-small" onclick="copyInviteLink()" title="ກັອບລິ້ງເຊີນສົ່ງໃຫ້ໝູ່">🔗 ເຊີນ</button>
+                <button type="button" class="btn-small" onclick="quickAddCurrentRemoteFriend()" title="ບັນທຶກຊື່ນີ້ເປັນໝູ່">+ Add ໝູ່</button>
+              </form>
 
               <div class="voice-tiles">
                 ${isInThisVoice ? `
                   <div id="tile-local" class="voice-tile ${state.isLocalSpeaking ? "speaking" : ""}">
-                    <div class="voice-avatar">${escapeHtml(initials(me.name))}</div>
+                    ${state.isCameraOn
+                      ? `<video id="local-video" class="tile-video mirror" autoplay muted playsinline></video>`
+                      : `<div class="voice-avatar">${escapeHtml(initials(me.name))}</div>`}
                     <div class="voice-tile-footer">
                       <span class="voice-name-pill">${escapeHtml(me.name)} (You)</span>
-                      <span class="badge">${state.isMuted ? "🔇 Muted" : "🎙️ Live"} ${state.isDeafened ? "• 🔕" : ""}</span>
+                      <span class="badge">${state.isMuted ? "🔇 Muted" : "🎙️ Live"} ${state.isCameraOn ? "• 📹" : ""} ${state.isDeafened ? "• 🔕" : ""}</span>
                     </div>
                   </div>` : `
                   <div class="voice-tile" style="opacity:0.7; border: 1px dashed var(--bg-hover); background: transparent;">
@@ -1282,19 +1899,22 @@
 
                 ${state.inCall && remoteName ? `
                   <div id="tile-remote" class="voice-tile ${state.isRemoteSpeaking ? "speaking" : ""}">
-                    <div class="voice-avatar">${escapeHtml(initials(remoteName))}</div>
+                    ${state.isRemoteCameraOn
+                      ? `<video id="remote-video" class="tile-video" autoplay muted playsinline></video>`
+                      : `<div class="voice-avatar">${escapeHtml(initials(remoteName))}</div>`}
                     <div class="voice-tile-footer">
                       <span class="voice-name-pill">${escapeHtml(remoteName)}</span>
-                      <span class="badge">🟢 Connected</span>
+                      <span class="badge">🟢 Connected ${state.isRemoteCameraOn ? "• 📹" : ""}</span>
                     </div>
                   </div>` : `
                   <div class="voice-tile" style="opacity:0.55; border: 1px dashed var(--bg-hover); background: transparent;">
-                    <div class="stage-sub" style="text-align:center;">ວາງ Peer ID ຂອງໝູ່ ຫຼື ເລືອກໝູ່ດ້ານເທິງ<br/>ເພື່ອເຊື່ອມຕໍ່ສຽງໃນຫ້ອງ ${escapeHtml(ch.name)}</div>
+                    <div class="stage-sub" style="text-align:center;">ພິມຊື່ @mdc.http ຂອງໝູ່ ຫຼື ກົດ <strong>🔗 ລິ້ງເຊີນ</strong><br/>ເພື່ອໂທສຽງ, ເປີດກ້ອງ ແລະ ຊິ້ງຂໍ້ຄວາມແບບ Real-time</div>
                   </div>`}
               </div>
 
               <div class="voice-dock">
                 <button type="button" class="dock-btn ${state.isMuted ? "active" : ""}" onclick="toggleMute()" title="ປິດ/ເປີດໄມ">${state.isMuted ? "🔇" : "🎙️"}</button>
+                <button type="button" class="dock-btn ${state.isCameraOn ? "cam-on" : ""}" onclick="toggleCamera()" title="ເປີດ/ປິດກ້ອງ">${state.isCameraOn ? "📹" : "📷"}</button>
                 <button type="button" class="dock-btn ${state.isDeafened ? "active" : ""}" onclick="toggleDeafen()" title="ປິດ/ເປີດສຽງ">${state.isDeafened ? "🔕" : "🎧"}</button>
                 <button type="button" class="dock-btn ${state.isPTT ? "ptt-on" : ""}" onclick="togglePTT()" title="Push-to-Talk (Space)">${state.isPTT ? "PTT: Space" : "⌨️"}</button>
                 ${isInThisVoice
@@ -1306,12 +1926,15 @@
             ${state.voiceChatOpen ? `<aside class="voice-side-chat">${renderChatSection(ch.id)}</aside>` : ""}
           </div>
         `;
+        attachMediaStreamsToUI();
       } else if (ch.type === "text") {
         body.innerHTML = renderChatSection(ch.id);
       } else if (ch.type === "post") {
         const allPosts = state.postsByChannel[ch.id] || [];
         const tags = ["All", "ທົ່ວໄປ", "ອັບເດດ", "ຄຳຖາມ", "ຜົນງານ"];
         const filtered = state.activePostTag === "All" ? allPosts : allPosts.filter(p => p.tag === state.activePostTag);
+        const me = state.users.me;
+
         body.innerHTML = `
           <div class="post-layout">
             <form class="post-composer" onsubmit="createPost(event)">
@@ -1328,27 +1951,54 @@
             <div class="tag-bar">
               ${tags.map(t => `<button type="button" class="tag-pill ${state.activePostTag === t ? "active" : ""}" onclick="setPostTagFilter('${t}')">${t}</button>`).join("")}
             </div>
-            ${filtered.map(p => `
+            ${filtered.map(p => {
+              const canManage = (p.authorEmail && p.authorEmail === me.email) || p.author === me.name || p.author === "System";
+              const isEditing = state.editingPostId === p.id;
+              return `
               <article class="post-card">
-                <div class="post-header">
-                  <div><h3 class="post-title">${escapeHtml(p.title)}</h3><div class="stage-sub">ໂດຍ ${escapeHtml(p.author)} • ${escapeHtml(p.time)}</div></div>
-                  <span class="badge">${escapeHtml(p.tag)}</span>
-                </div>
-                <p class="post-body">${escapeHtml(p.body)}</p>
-                ${p.imageUrl ? `<img class="post-img" src="${escapeHtml(p.imageUrl)}" alt="post image" />` : ""}
+                ${isEditing ? `
+                  <form class="post-composer" style="padding:0; background:transparent;" onsubmit="saveEditPost(event, '${p.id}')">
+                    <div class="post-composer-row">
+                      <input id="edit-post-title" type="text" value="${escapeHtml(p.title)}" required />
+                      <select id="edit-post-tag">
+                        ${["ທົ່ວໄປ", "ອັບເດດ", "ຄຳຖາມ", "ຜົນງານ"].map(t => `<option value="${t}" ${p.tag === t ? "selected" : ""}>${t}</option>`).join("")}
+                      </select>
+                    </div>
+                    <textarea id="edit-post-body" rows="3" required>${escapeHtml(p.body)}</textarea>
+                    <div class="post-composer-row">
+                      <input id="edit-post-img" type="url" value="${escapeHtml(p.imageUrl || "")}" placeholder="ລິ້ງຮູບພາບ (ຖ້າມີ)..." />
+                      <button type="submit">ບັນທຶກ</button>
+                      <button type="button" class="btn-small" onclick="cancelEditPost()">ຍົກເລີກ</button>
+                    </div>
+                  </form>
+                ` : `
+                  <div class="post-header">
+                    <div>
+                      <h3 class="post-title">${escapeHtml(p.title)} ${p.edited ? `<span class="edited-tag">(ແກ້ໄຂແລ້ວ)</span>` : ""}</h3>
+                      <div class="stage-sub">ໂດຍ ${escapeHtml(p.author)} • ${escapeHtml(p.time)}</div>
+                    </div>
+                    <div class="post-header-right">
+                      <span class="badge">${escapeHtml(p.tag)}</span>
+                      ${canManage ? `<button type="button" class="btn-small" onclick="startEditPost('${p.id}')">✏️ ແກ້ໄຂ</button>` : ""}
+                      ${canManage ? `<button type="button" class="btn-small btn-danger-soft" onclick="deletePost('${p.id}')">🗑️ ລົບ</button>` : ""}
+                    </div>
+                  </div>
+                  <p class="post-body">${escapeHtml(p.body)}</p>
+                  ${p.imageUrl ? `<img class="post-img" src="${escapeHtml(p.imageUrl)}" alt="post image" />` : ""}
+                `}
                 <div class="post-footer">
                   <button type="button" class="react-btn" onclick="toggleLikePost('${p.id}')">${p.likedByMe ? "❤️" : "🤍"} ${p.likes}</button>
                   <span class="stage-sub">💬 ${p.comments.length} ຄອມເມັ້ນ</span>
                 </div>
                 <div class="comment-box">
-                  ${p.comments.map(c => `<div class="comment-item"><strong>${escapeHtml(c.author)}:</strong> ${escapeHtml(c.text)}</div>`).join("")}
+                  ${p.comments.map(c => `<div class="comment-item"><span><strong>${escapeHtml(c.author)}:</strong> ${escapeHtml(c.text)}</span></div>`).join("")}
                   <form class="comment-form" onsubmit="addComment(event, '${p.id}')">
                     <input type="text" placeholder="ຂຽນຄອມເມັ້ນ..." autocomplete="off" />
                     <button type="submit" class="btn-small">ສົ່ງ</button>
                   </form>
                 </div>
-              </article>
-            `).join("") || `<div class="stage-sub">ຍັງບໍ່ມີໂພສໃນໝວດນີ້</div>`}
+              </article>`;
+            }).join("") || `<div class="stage-sub">ຍັງບໍ່ມີໂພສໃນໝວດນີ້</div>`}
           </div>
         `;
       }
@@ -1361,6 +2011,7 @@
       renderChannelTree();
       renderStageHeader();
       renderStageBody();
+      renderInviteBanner();
     }
 
     function bootWorkspace() {
