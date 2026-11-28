@@ -3,119 +3,891 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini Discord Voice</title>
+  <title>Voice, Chat &amp; Post Hub</title>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #313338; color: #f2f3f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .card { background: #2b2d31; padding: 24px; border-radius: 12px; width: 360px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-    h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
-    .id-box { background: #1e1f22; padding: 10px; border-radius: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .id-text { color: #00a8fc; font-weight: bold; word-break: break-all; }
-    .btn-small { width: auto; padding: 4px 10px; font-size: 12px; margin: 0; background: #4e5058; }
-    input, button { width: 100%; padding: 11px; margin: 6px 0; border-radius: 6px; border: none; box-sizing: border-box; font-size: 14px; }
-    input { background: #1e1f22; color: #fff; outline: none; }
-    button { background: #5865f2; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    button:hover { background: #4752c4; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #1e1f22;
+      color: #f2f3f5;
+    }
+    .app-shell {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      height: 100vh;
+    }
+    /* Sidebar */
+    .sidebar {
+      background: #2b2d31;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .server-header, .my-id-box, .self-controls {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid #1e1f22;
+    }
+    .self-controls {
+      border-bottom: none;
+      border-top: 1px solid #1e1f22;
+      background: #232428;
+      flex-wrap: wrap;
+    }
+    .id-text {
+      color: #00a8fc;
+      font-weight: 600;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .channel-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #949ba4;
+      padding: 12px 8px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cat-add {
+      background: transparent;
+      color: #949ba4;
+      padding: 2px 6px;
+      font-size: 14px;
+    }
+    .cat-add:hover { background: #35373c; color: #fff; }
+    .channel-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #b5bac1;
+      user-select: none;
+    }
+    .channel-item:hover:not(.locked) { background: #35373c; color: #f2f3f5; }
+    .channel-item.active { background: #404249; color: #fff; font-weight: 600; }
+    .channel-item.is-sub {
+      margin-left: 18px;
+      font-size: 13px;
+      border-left: 2px solid #4e5058;
+      border-radius: 0 6px 6px 0;
+    }
+    .channel-item.locked { opacity: 0.55; cursor: not-allowed; }
+    .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #1e1f22;
+      color: #b5bac1;
+    }
+
+    /* Main Stage */
+    .main-stage {
+      display: flex;
+      flex-direction: column;
+      background: #313338;
+      min-height: 0;
+    }
+    .stage-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid #232428;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .stage-header h2 { margin: 0; font-size: 16px; }
+    .stage-sub { font-size: 12px; color: #949ba4; }
+    .stage-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* Inputs & Buttons */
+    input, textarea, select {
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #1e1f22;
+      color: #f2f3f5;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    button {
+      background: #5865f2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button:hover:not(:disabled) { background: #4752c4; }
+    .btn-small { padding: 5px 9px; font-size: 12px; background: #4e5058; }
+    .btn-small:hover { background: #5c5f66; }
     .btn-mute { background: #4e5058; }
     .btn-hangup { background: #da373c; }
     .btn-hangup:hover { background: #a1282c; }
-    .status { font-size: 13px; color: #949ba4; margin-top: 10px; text-align: center; }
+
+    /* Voice Room */
+    .quick-call { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .voice-grid {
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      background: #2b2d31;
+      border-bottom: 1px solid #232428;
+    }
+    .member-card {
+      background: #313338;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .member-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+
+    /* Chat Room */
+    .chat-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg-item {
+      background: #2b2d31;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .msg-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .msg-meta { font-size: 12px; color: #949ba4; }
+    .msg-meta strong { color: #f2f3f5; margin-right: 6px; }
+    .msg-reply-ref {
+      font-size: 12px;
+      color: #b5bac1;
+      background: #232428;
+      padding: 4px 8px;
+      border-left: 3px solid #5865f2;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .msg-actions { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+    .react-btn {
+      background: #232428;
+      color: #dbdee1;
+      padding: 3px 8px;
+      font-size: 12px;
+      border-radius: 12px;
+    }
+    .react-btn:hover { background: #3f4147; }
+    .reply-banner {
+      padding: 6px 16px;
+      background: #232428;
+      font-size: 12px;
+      color: #b5bac1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-input-bar {
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      background: #2b2d31;
+    }
+    .chat-input-bar input { flex: 1; }
+
+    /* Post / Forum Room */
+    .post-layout {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .post-composer {
+      background: #2b2d31;
+      padding: 14px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .post-composer-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .post-composer-row input { flex: 1; min-width: 180px; }
+    .tag-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag-pill {
+      background: #2b2d31;
+      color: #b5bac1;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-size: 12px;
+    }
+    .tag-pill.active { background: #5865f2; color: #fff; }
+    .post-card {
+      background: #2b2d31;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .post-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .post-title { margin: 0; font-size: 16px; color: #fff; }
+    .post-body { margin: 0; font-size: 14px; color: #dbdee1; white-space: pre-wrap; line-height: 1.5; }
+    .post-img { max-width: 100%; max-height: 280px; border-radius: 8px; object-fit: cover; }
+    .post-footer { display: flex; gap: 10px; align-items: center; }
+    .comment-box {
+      background: #232428;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .comment-item { font-size: 13px; color: #dbdee1; }
+    .comment-form { display: flex; gap: 6px; }
+    .comment-form input { flex: 1; padding: 7px 10px; }
+
+    @media (max-width: 768px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { max-height: 36vh; }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h3>🎙️ Voice Channel</h3>
-    <div class="id-box">
-      <span>ID: <span id="my-id" class="id-text">ກຳລັງເຊື່ອມຕໍ່...</span></span>
-      <button class="btn-small" onclick="copyId()">Copy</button>
-    </div>
-    <input type="text" id="peer-id" placeholder="ວາງ ID ຂອງໝູ່ທີ່ນີ້">
-    <button id="call-btn" onclick="startCall()">📞 ໂທຫາ (Join Call)</button>
-    <button id="mute-btn" class="btn-mute" onclick="toggleMute()" style="display:none;">🔇 ປິດໄມ (Mute)</button>
-    <button id="hangup-btn" class="btn-hangup" onclick="hangUp()" style="display:none;">📵 ວາງສາຍ (Disconnect)</button>
-    <div id="status" class="status">ພ້ອມໃຊ້ງານ</div>
-    <audio id="remote-audio" autoplay></audio>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="server-header">
+        <strong>My Discord Hub</strong>
+        <span class="badge">v0.2</span>
+      </div>
+
+      <div class="my-id-box">
+        <span>ID: <span id="my-peer-id" class="id-text">ກຳລັງເຊື່ອມຕໍ່...</span></span>
+        <button type="button" class="btn-small" onclick="copyId()">Copy</button>
+      </div>
+
+      <nav id="channel-tree" class="channel-tree" aria-label="Channels"></nav>
+
+      <div class="self-controls">
+        <button type="button" id="btn-mute" class="btn-mute" onclick="toggleMute()">🔇 ປິດໄມ</button>
+        <button type="button" id="btn-deafen" class="btn-mute" onclick="toggleDeafen()">🎧 ສຽງເປີດ</button>
+        <button type="button" id="btn-ptt" class="btn-mute" onclick="togglePTT()">PTT: Off</button>
+      </div>
+    </aside>
+
+    <main class="main-stage">
+      <header class="stage-header">
+        <div>
+          <h2 id="active-channel-title">General Voice</h2>
+          <div id="active-channel-sub" class="stage-sub">ພ້ອມໃຊ້ງານ</div>
+        </div>
+        <div id="header-actions" class="quick-call"></div>
+      </header>
+
+      <div id="stage-body" class="stage-body"></div>
+    </main>
   </div>
 
+  <audio id="remote-audio" autoplay></audio>
+
   <script>
+    const state = {
+      currentUserId: "me",
+      activeChannelId: "ch_voice_general",
+      replyTo: null,
+      activePostTag: "All",
+      isMuted: false,
+      isDeafened: false,
+      isPTT: false,
+      pttPressed: false,
+      callStatus: "ພ້ອມໃຊ້ງານ",
+      inCall: false,
+      channels: [
+        // Text Channels
+        { id: "ch_text_general", type: "text", parentId: null, name: "ແຊັດທົ່ວໄປ", desc: "ສົນທະນາທົ່ວໄປໃນທີມ", neededJoinPower: 0 },
+        { id: "ch_text_dev", type: "text", parentId: null, name: "dev-chat", desc: "ແລກປ່ຽນໂຄ້ດ ແລະ ແຈ້ງບັກ", neededJoinPower: 0 },
+        // Post / Forum Channels
+        { id: "ch_post_news", type: "post", parentId: null, name: "ປະກາດ-ໂພສ", desc: "ໂພສຂ່າວສານ, ອັບເດດ ແລະ ຄອມເມັ້ນ", neededJoinPower: 0 },
+        { id: "ch_post_showcase", type: "post", parentId: null, name: "ແຊຣ໌ຜົນງານ", desc: "ໂພສຮູບ/ລິ້ງຜົນງານຂອງສະມາຊິກ", neededJoinPower: 0 },
+        // Voice Channels (with TS3 Sub-channels & Permissions)
+        { id: "ch_voice_general", type: "voice", parentId: null, name: "General Voice", desc: "ຫ້ອງໂທສຽງຫຼັກ", neededJoinPower: 0 },
+        { id: "ch_voice_squad1", type: "voice", parentId: null, name: "Squad 1", desc: "ຫ້ອງທີມ (Join Power 10)", neededJoinPower: 10 },
+        { id: "ch_voice_sub_a", type: "voice", parentId: "ch_voice_squad1", name: "Sub-channel A", desc: "ຫ້ອງຍ່ອຍຍຸດທະວິທີ (Join Power 25)", neededJoinPower: 25 }
+      ],
+      users: {
+        me: { id: "me", name: "You", joinPower: 50, movePower: 50, neededMovePower: 50 },
+        peer_guest: { id: "peer_guest", name: "Guest Member", joinPower: 15, movePower: 5, neededMovePower: 20 }
+      },
+      messagesByChannel: {
+        ch_text_general: [
+          { id: "m1", sender: "System", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ #ແຊັດທົ່ວໄປ", reply: null, reactions: { "👍": 1 } }
+        ],
+        ch_text_dev: [
+          { id: "m2", sender: "System", time: "09:05", text: "ສົ່ງລິ້ງ Commit ຫຼື ຖາມບັນຫາໄດ້ທີ່ນີ້", reply: null, reactions: {} }
+        ],
+        ch_voice_general: [
+          { id: "m3", sender: "System", time: "09:00", text: "ແຊັດຍ່ອຍປະຈຳຫ້ອງ General Voice", reply: null, reactions: {} }
+        ]
+      },
+      postsByChannel: {
+        ch_post_news: [
+          {
+            id: "p1",
+            author: "You",
+            time: "ມື້ນີ້ 09:10",
+            tag: "ອັບເດດ",
+            title: "ເປີດໃຊ້ງານລະບົບ ຫ້ອງແຊັດ + ຫ້ອງໂພສ + ຫ້ອງໂທສຽງ",
+            body: "ຕອນນີ້ສາມາດສະຫຼັບຫ້ອງລະຫວ່າງ Text Chat, Post/Forum ແລະ Voice Channel ໄດ້ໃນໜ້າດຽວແລ້ວ!",
+            imageUrl: "",
+            likes: 2,
+            likedByMe: false,
+            comments: [{ author: "Guest Member", text: "ໃຊ້ງານງ່າຍຂຶ້ນຫຼາຍ!" }]
+          }
+        ],
+        ch_post_showcase: []
+      }
+    };
+
     const peer = new Peer();
     let localStream;
     let currentCall;
-    let isMuted = false;
 
-    peer.on('open', id => {
-      document.getElementById('my-id').innerText = id;
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function nowTime() {
+      return new Date().toLocaleTimeString("lo-LA", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    /* PeerJS Voice */
+    peer.on("open", id => {
+      document.getElementById("my-peer-id").innerText = id;
     });
 
-    peer.on('error', err => {
-      document.getElementById('status').innerText = 'Error: ' + err.type;
+    peer.on("error", err => {
+      state.callStatus = "Error: " + err.type;
+      renderStageHeader();
     });
 
-    // ຮັບສາຍເຂົ້າອັດຕະໂນມັດ
-    peer.on('call', async call => {
+    peer.on("call", async call => {
       try {
-        document.getElementById('status').innerText = 'ກຳລັງຮັບສາຍ...';
+        state.callStatus = "ກຳລັງຮັບສາຍ...";
+        renderStageHeader();
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        applyAudioTrackStates();
         call.answer(localStream);
         setupCallEvents(call);
       } catch (err) {
-        alert('ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: ' + err.message);
+        alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
       }
     });
 
-    // ໂທອອກ
     async function startCall() {
-      const friendId = document.getElementById('peer-id').value.trim();
-      if (!friendId) return alert('ກະລຸນາໃສ່ ID ຂອງໝູ່');
+      const input = document.getElementById("remote-id-input");
+      const friendId = input ? input.value.trim() : "";
+      if (!friendId) return alert("ກະລຸນາໃສ່ ID ຂອງໝູ່");
       try {
-        document.getElementById('status').innerText = 'ກຳລັງໂທຫາ...';
+        state.callStatus = "ກຳລັງໂທຫາ...";
+        renderStageHeader();
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        applyAudioTrackStates();
         const call = peer.call(friendId, localStream);
         setupCallEvents(call);
       } catch (err) {
-        alert('ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: ' + err.message);
+        alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
       }
     }
 
     function setupCallEvents(call) {
       currentCall = call;
-      document.getElementById('call-btn').style.display = 'none';
-      document.getElementById('mute-btn').style.display = 'block';
-      document.getElementById('hangup-btn').style.display = 'block';
+      state.inCall = true;
+      renderStageHeader();
 
-      call.on('stream', remoteStream => {
-        document.getElementById('remote-audio').srcObject = remoteStream;
-        document.getElementById('status').innerText = '🟢 ເຊື່ອມຕໍ່ສຽງສຳເລັດ';
+      call.on("stream", remoteStream => {
+        const audioEl = document.getElementById("remote-audio");
+        audioEl.srcObject = remoteStream;
+        audioEl.muted = state.isDeafened;
+        state.callStatus = "🟢 ເຊື່ອມຕໍ່ສຽງສຳເລັດ";
+        renderStageHeader();
       });
 
-      call.on('close', resetUI);
-    }
-
-    function toggleMute() {
-      if (!localStream) return;
-      isMuted = !isMuted;
-      localStream.getAudioTracks()[0].enabled = !isMuted;
-      document.getElementById('mute-btn').innerText = isMuted ? '🔊 ເປີດໄມ (Unmute)' : '🔇 ປິດໄມ (Mute)';
+      call.on("close", resetCallUI);
     }
 
     function hangUp() {
       if (currentCall) currentCall.close();
-      resetUI();
+      resetCallUI();
     }
 
-    function resetUI() {
+    function resetCallUI() {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
-      document.getElementById('call-btn').style.display = 'block';
-      document.getElementById('mute-btn').style.display = 'none';
-      document.getElementById('hangup-btn').style.display = 'none';
-      document.getElementById('status').innerText = 'ວາງສາຍແລ້ວ';
+      currentCall = null;
+      state.inCall = false;
+      state.callStatus = "ວາງສາຍແລ້ວ";
+      renderStageHeader();
     }
+
+    function applyAudioTrackStates() {
+      if (!localStream) return;
+      const track = localStream.getAudioTracks()[0];
+      if (!track) return;
+      track.enabled = state.isPTT ? (!state.isMuted && state.pttPressed) : !state.isMuted;
+    }
+
+    function toggleMute() {
+      state.isMuted = !state.isMuted;
+      applyAudioTrackStates();
+      document.getElementById("btn-mute").innerText = state.isMuted ? "🔊 ເປີດໄມ" : "🔇 ປິດໄມ";
+      renderStageBody();
+    }
+
+    function toggleDeafen() {
+      state.isDeafened = !state.isDeafened;
+      document.getElementById("remote-audio").muted = state.isDeafened;
+      document.getElementById("btn-deafen").innerText = state.isDeafened ? "🔇 ສຽງປິດ" : "🎧 ສຽງເປີດ";
+      renderStageBody();
+    }
+
+    function togglePTT() {
+      state.isPTT = !state.isPTT;
+      state.pttPressed = false;
+      applyAudioTrackStates();
+      document.getElementById("btn-ptt").innerText = state.isPTT ? "PTT: On (Space)" : "PTT: Off";
+    }
+
+    window.addEventListener("keydown", e => {
+      const tag = document.activeElement.tagName;
+      if (state.isPTT && e.code === "Space" && tag !== "INPUT" && tag !== "TEXTAREA") {
+        e.preventDefault();
+        state.pttPressed = true;
+        applyAudioTrackStates();
+      }
+    });
+
+    window.addEventListener("keyup", e => {
+      if (state.isPTT && e.code === "Space") {
+        state.pttPressed = false;
+        applyAudioTrackStates();
+      }
+    });
 
     function copyId() {
-      const id = document.getElementById('my-id').innerText;
+      const id = document.getElementById("my-peer-id").innerText;
       navigator.clipboard.writeText(id);
-      alert('ກັອບປີ້ ID ແລ້ວ: ' + id);
+      alert("ກັອບປີ້ ID ແລ້ວ: " + id);
     }
+
+    /* Permissions (TS3 Style) */
+    function canExecute(actorId, action, { targetId = null, targetChannelId = null } = {}) {
+      const actor = state.users[actorId];
+      if (!actor) return { allowed: false, reason: "ບໍ່ພົບຜູ້ໃຊ້" };
+
+      if (action === "join_channel") {
+        const ch = state.channels.find(c => c.id === targetChannelId);
+        if (!ch) return { allowed: false, reason: "ບໍ່ພົບຫ້ອງ" };
+        return actor.joinPower >= ch.neededJoinPower
+          ? { allowed: true }
+          : { allowed: false, reason: `ຕ້ອງການ Join Power ${ch.neededJoinPower}` };
+      }
+
+      if (action === "move_client") {
+        const target = state.users[targetId];
+        const ch = state.channels.find(c => c.id === targetChannelId);
+        if (!target || !ch) return { allowed: false, reason: "ຂໍ້ມູນບໍ່ຄົບ" };
+        return (actor.movePower >= target.neededMovePower && actor.joinPower >= ch.neededJoinPower)
+          ? { allowed: true }
+          : { allowed: false, reason: "Move/Join Power ບໍ່ພຽງພໍ" };
+      }
+      return { allowed: false, reason: "Unknown action" };
+    }
+
+    /* Channel Navigation & Creation */
+    function selectChannel(channelId) {
+      const check = canExecute(state.currentUserId, "join_channel", { targetChannelId: channelId });
+      if (!check.allowed) return alert("ເຂົ້າຫ້ອງບໍ່ໄດ້: " + check.reason);
+      state.activeChannelId = channelId;
+      state.replyTo = null;
+      state.activePostTag = "All";
+      renderAll();
+    }
+
+    function addChannel(type) {
+      const label = type === "voice" ? "ຫ້ອງໂທ/Sub-channel" : type === "text" ? "ຫ້ອງແຊັດ" : "ຫ້ອງໂພສ";
+      const name = prompt(`ຊື່ ${label} ໃໝ່:`);
+      if (!name || !name.trim()) return;
+
+      let parentId = null;
+      if (type === "voice") {
+        const active = state.channels.find(c => c.id === state.activeChannelId);
+        if (active && active.type === "voice") {
+          parentId = active.parentId ? active.parentId : active.id;
+        }
+      }
+
+      const id = `ch_${type}_${Date.now()}`;
+      state.channels.push({
+        id,
+        type,
+        parentId,
+        name: name.trim(),
+        desc: `ສ້າງໃໝ່ (${label})`,
+        neededJoinPower: type === "voice" ? 10 : 0
+      });
+      if (type === "post") state.postsByChannel[id] = [];
+      else state.messagesByChannel[id] = [{ id: "sys_" + Date.now(), sender: "System", time: nowTime(), text: `ສ້າງຫ້ອງ "${name.trim()}" ແລ້ວ`, reply: null, reactions: {} }];
+
+      state.activeChannelId = id;
+      renderAll();
+    }
+
+    /* Text Chat Functions */
+    function sendChatMessage(event) {
+      event.preventDefault();
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      list.push({
+        id: "m_" + Date.now(),
+        sender: state.users[state.currentUserId].name,
+        time: nowTime(),
+        text,
+        reply: state.replyTo,
+        reactions: {}
+      });
+      state.messagesByChannel[state.activeChannelId] = list;
+      state.replyTo = null;
+      input.value = "";
+      renderStageBody();
+    }
+
+    function setReplyTo(msgId) {
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      const target = list.find(m => m.id === msgId);
+      if (!target) return;
+      state.replyTo = { sender: target.sender, text: target.text };
+      renderStageBody();
+      const input = document.getElementById("chat-input");
+      if (input) input.focus();
+    }
+
+    function clearReply() {
+      state.replyTo = null;
+      renderStageBody();
+    }
+
+    function toggleReaction(msgId, emoji) {
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      const msg = list.find(m => m.id === msgId);
+      if (!msg) return;
+      msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
+      renderStageBody();
+    }
+
+    function moveGuestToActiveChannel() {
+      const check = canExecute(state.currentUserId, "move_client", {
+        targetId: "peer_guest",
+        targetChannelId: state.activeChannelId
+      });
+      if (!check.allowed) return alert("ຍ້າຍບໍ່ໄດ້: " + check.reason);
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      list.push({ id: "m_" + Date.now(), sender: "System", time: nowTime(), text: "ຍ້າຍ Guest Member ເຂົ້າຫ້ອງນີ້ສຳເລັດ", reply: null, reactions: {} });
+      state.messagesByChannel[state.activeChannelId] = list;
+      renderStageBody();
+    }
+
+    /* Post / Forum Functions */
+    function createPost(event) {
+      event.preventDefault();
+      const title = document.getElementById("post-title").value.trim();
+      const body = document.getElementById("post-body").value.trim();
+      const tag = document.getElementById("post-tag").value;
+      const imageUrl = document.getElementById("post-img").value.trim();
+      if (!title || !body) return alert("ກະລຸນາໃສ່ຫົວຂໍ້ ແລະ ເນື້ອຫາໂພສ");
+
+      const list = state.postsByChannel[state.activeChannelId] || [];
+      list.unshift({
+        id: "p_" + Date.now(),
+        author: state.users[state.currentUserId].name,
+        time: nowTime(),
+        tag,
+        title,
+        body,
+        imageUrl,
+        likes: 0,
+        likedByMe: false,
+        comments: []
+      });
+      state.postsByChannel[state.activeChannelId] = list;
+      renderStageBody();
+    }
+
+    function toggleLikePost(postId) {
+      const list = state.postsByChannel[state.activeChannelId] || [];
+      const post = list.find(p => p.id === postId);
+      if (!post) return;
+      post.likedByMe = !post.likedByMe;
+      post.likes += post.likedByMe ? 1 : -1;
+      renderStageBody();
+    }
+
+    function addComment(event, postId) {
+      event.preventDefault();
+      const input = event.target.querySelector("input");
+      const text = input.value.trim();
+      if (!text) return;
+      const list = state.postsByChannel[state.activeChannelId] || [];
+      const post = list.find(p => p.id === postId);
+      if (!post) return;
+      post.comments.push({ author: state.users[state.currentUserId].name, text });
+      renderStageBody();
+    }
+
+    function setPostTagFilter(tag) {
+      state.activePostTag = tag;
+      renderStageBody();
+    }
+
+    /* Renderers */
+    function renderChannelTree() {
+      const nav = document.getElementById("channel-tree");
+      nav.innerHTML = "";
+      const me = state.users[state.currentUserId];
+
+      const groups = [
+        { type: "text", title: "ຫ້ອງແຊັດ (Text)", icon: "#" },
+        { type: "post", title: "ຫ້ອງໂພສ (Forum)", icon: "📝" },
+        { type: "voice", title: "ຫ້ອງໂທສຽງ (Voice)", icon: "🔊" }
+      ];
+
+      groups.forEach(group => {
+        const header = document.createElement("div");
+        header.className = "cat-label";
+        header.innerHTML = `
+          <span>${group.title}</span>
+          <button type="button" class="cat-add" title="ເພີ່ມຫ້ອງ" onclick="addChannel('${group.type}')">+</button>
+        `;
+        nav.appendChild(header);
+
+        const renderLevel = (parentId) => {
+          state.channels
+            .filter(c => c.type === group.type && c.parentId === parentId)
+            .forEach(ch => {
+              const locked = me.joinPower < ch.neededJoinPower;
+              const div = document.createElement("div");
+              div.className = `channel-item ${ch.parentId ? "is-sub" : ""} ${ch.id === state.activeChannelId ? "active" : ""} ${locked ? "locked" : ""}`;
+              div.onclick = () => selectChannel(ch.id);
+              div.innerHTML = `
+                <span>${ch.parentId ? "↳ " : group.icon + " "}${escapeHtml(ch.name)}</span>
+                ${ch.type === "voice" ? `<span class="badge">${locked ? "🔒 " + ch.neededJoinPower : "JP " + ch.neededJoinPower}</span>` : ""}
+              `;
+              nav.appendChild(div);
+              renderLevel(ch.id);
+            });
+        };
+        renderLevel(null);
+      });
+    }
+
+    function renderStageHeader() {
+      const ch = state.channels.find(c => c.id === state.activeChannelId);
+      if (!ch) return;
+      const prefix = ch.type === "text" ? "# " : ch.type === "post" ? "📝 " : "🔊 ";
+      document.getElementById("active-channel-title").innerText = prefix + ch.name;
+      document.getElementById("active-channel-sub").innerText = ch.type === "voice" ? state.callStatus : ch.desc;
+
+      const actions = document.getElementById("header-actions");
+      if (ch.type === "voice") {
+        actions.innerHTML = `
+          <input id="remote-id-input" type="text" placeholder="ວາງ ID ຄູ່ສາຍ..." />
+          ${!state.inCall
+            ? `<button type="button" onclick="startCall()">📞 ໂທຫາ (Join Call)</button>`
+            : `<button type="button" class="btn-hangup" onclick="hangUp()">📵 ວາງສາຍ</button>`}
+        `;
+      } else {
+        actions.innerHTML = `<span class="badge">${ch.type === "text" ? "Text Channel" : "Forum / Post"}</span>`;
+      }
+    }
+
+    function renderChatSection(channelId) {
+      const list = state.messagesByChannel[channelId] || [];
+      const feedHtml = list.map(m => {
+        const reacts = Object.entries(m.reactions || {})
+          .map(([emoji, count]) => `<button type="button" class="react-btn" onclick="toggleReaction('${m.id}','${emoji}')">${emoji} ${count}</button>`)
+          .join("");
+        return `
+          <div class="msg-item">
+            <div class="msg-top">
+              <span class="msg-meta"><strong>${escapeHtml(m.sender)}</strong>${escapeHtml(m.time)}</span>
+              <button type="button" class="btn-small" onclick="setReplyTo('${m.id}')">ຕອບກັບ</button>
+            </div>
+            ${m.reply ? `<div class="msg-reply-ref">↳ ${escapeHtml(m.reply.sender)}: ${escapeHtml(m.reply.text)}</div>` : ""}
+            <div>${escapeHtml(m.text)}</div>
+            <div class="msg-actions">
+              ${reacts}
+              <button type="button" class="react-btn" onclick="toggleReaction('${m.id}','👍')">+👍</button>
+              <button type="button" class="react-btn" onclick="toggleReaction('${m.id}','🔥')">+🔥</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <section id="chat-messages" class="chat-feed">${feedHtml || `<div class="stage-sub">ຍັງບໍ່ມີຂໍ້ຄວາມໃນຫ້ອງນີ້</div>`}</section>
+        ${state.replyTo ? `
+          <div class="reply-banner">
+            <span>ກຳລັງຕອບກັບ <strong>${escapeHtml(state.replyTo.sender)}</strong>: ${escapeHtml(state.replyTo.text)}</span>
+            <button type="button" class="btn-small" onclick="clearReply()">✕</button>
+          </div>` : ""}
+        <form class="chat-input-bar" onsubmit="sendChatMessage(event)">
+          <input id="chat-input" type="text" placeholder="ພິມຂໍ້ຄວາມ..." autocomplete="off" />
+          <button type="submit">ສົ່ງ</button>
+        </form>
+      `;
+    }
+
+    function renderStageBody() {
+      const ch = state.channels.find(c => c.id === state.activeChannelId);
+      const body = document.getElementById("stage-body");
+      if (!ch) return;
+
+      if (ch.type === "voice") {
+        const me = state.users[state.currentUserId];
+        const guest = state.users.peer_guest;
+        body.innerHTML = `
+          <section class="voice-grid">
+            <div class="member-card">
+              <div class="member-top">
+                <strong>${escapeHtml(me.name)} (JP ${me.joinPower})</strong>
+                <span class="badge">${state.isMuted ? "Muted" : "Mic On"}</span>
+              </div>
+              <small class="stage-sub">Audio: ${state.isDeafened ? "Deafened" : "Active"}</small>
+            </div>
+            <div class="member-card">
+              <div class="member-top">
+                <strong>${escapeHtml(guest.name)}</strong>
+                <button type="button" class="btn-small" onclick="moveGuestToActiveChannel()">Move ຫ້ອງນີ້</button>
+              </div>
+              <small class="stage-sub">Join Power: ${guest.joinPower}</small>
+            </div>
+          </section>
+          ${renderChatSection(ch.id)}
+        `;
+      } else if (ch.type === "text") {
+        body.innerHTML = renderChatSection(ch.id);
+      } else if (ch.type === "post") {
+        const allPosts = state.postsByChannel[ch.id] || [];
+        const tags = ["All", "ທົ່ວໄປ", "ອັບເດດ", "ຄຳຖາມ", "ຜົນງານ"];
+        const filtered = state.activePostTag === "All"
+          ? allPosts
+          : allPosts.filter(p => p.tag === state.activePostTag);
+
+        body.innerHTML = `
+          <div class="post-layout">
+            <form class="post-composer" onsubmit="createPost(event)">
+              <div class="post-composer-row">
+                <input id="post-title" type="text" placeholder="ຫົວຂໍ້ໂພສໃໝ່..." required />
+                <select id="post-tag">
+                  <option value="ທົ່ວໄປ">ທົ່ວໄປ</option>
+                  <option value="ອັບເດດ">ອັບເດດ</option>
+                  <option value="ຄຳຖາມ">ຄຳຖາມ</option>
+                  <option value="ຜົນງານ">ຜົນງານ</option>
+                </select>
+              </div>
+              <textarea id="post-body" rows="3" placeholder="ຂຽນລາຍລະອຽດໂພສ..." required></textarea>
+              <div class="post-composer-row">
+                <input id="post-img" type="url" placeholder="ລິ້ງຮູບພາບ (ຖ້າມີ, ບໍ່ບັງຄັບ)..." />
+                <button type="submit">📝 ໂພສໃໝ່</button>
+              </div>
+            </form>
+
+            <div class="tag-bar">
+              ${tags.map(t => `<button type="button" class="tag-pill ${state.activePostTag === t ? "active" : ""}" onclick="setPostTagFilter('${t}')">${t}</button>`).join("")}
+            </div>
+
+            ${filtered.map(p => `
+              <article class="post-card">
+                <div class="post-header">
+                  <div>
+                    <h3 class="post-title">${escapeHtml(p.title)}</h3>
+                    <div class="stage-sub">ໂດຍ ${escapeHtml(p.author)} • ${escapeHtml(p.time)}</div>
+                  </div>
+                  <span class="badge">${escapeHtml(p.tag)}</span>
+                </div>
+                <p class="post-body">${escapeHtml(p.body)}</p>
+                ${p.imageUrl ? `<img class="post-img" src="${escapeHtml(p.imageUrl)}" alt="post image" />` : ""}
+                <div class="post-footer">
+                  <button type="button" class="react-btn" onclick="toggleLikePost('${p.id}')">${p.likedByMe ? "❤️" : "🤍"} ${p.likes}</button>
+                  <span class="stage-sub">💬 ${p.comments.length} ຄອມເມັ້ນ</span>
+                </div>
+                <div class="comment-box">
+                  ${p.comments.map(c => `<div class="comment-item"><strong>${escapeHtml(c.author)}:</strong> ${escapeHtml(c.text)}</div>`).join("")}
+                  <form class="comment-form" onsubmit="addComment(event, '${p.id}')">
+                    <input type="text" placeholder="ຂຽນຄອມເມັ້ນ..." autocomplete="off" />
+                    <button type="submit" class="btn-small">ສົ່ງ</button>
+                  </form>
+                </div>
+              </article>
+            `).join("") || `<div class="stage-sub">ຍັງບໍ່ມີໂພສໃນໝວດນີ້</div>`}
+          </div>
+        `;
+      }
+
+      const feed = document.getElementById("chat-messages");
+      if (feed) feed.scrollTop = feed.scrollHeight;
+    }
+
+    function renderAll() {
+      renderChannelTree();
+      renderStageHeader();
+      renderStageBody();
+    }
+
+    renderAll();
   </script>
 </body>
 </html>
