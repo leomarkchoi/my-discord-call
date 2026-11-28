@@ -1,205 +1,46 @@
 <!DOCTYPE html>
 <html lang="lo">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MDC Hub — Voice, Chat &amp; Post</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice, Chat &amp; Post Hub</title>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
-    /* ຖ້າມີໄຟລ໌ຟອນ LaoSomvang.ttf ໃຫ້ວາງໄວ້ໃນໂຟນເດີ fonts/ ເພື່ອໃຫ້ສະແດງໄດ້ທຸກເຄື່ອງເທິງ GitHub Pages */
-    @font-face {
-      font-family: 'Lao Somvang';
-      src: local('Lao Somvang'), local('LaoSomvang'), url('./fonts/LaoSomvang.ttf') format('truetype');
-      font-display: swap;
-    }
-
-    :root {
-      --bg-main: #111315;
-      --bg-sidebar: #181b1f;
-      --bg-surface: #1e2228;
-      --bg-hover: #242931;
-      --accent: #10b981;
-      --accent-hover: #059669;
-      --accent-soft: rgba(16, 185, 129, 0.14);
-      --text-main: #f3f4f6;
-      --text-muted: #8b949e;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --app-font: 'Inter', 'Lao Somvang', 'Noto Sans Lao', system-ui, sans-serif;
-    }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: var(--app-font);
-      background: var(--bg-main);
-      color: var(--text-main);
-      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #1e1f22;
+      color: #f2f3f5;
     }
-    .hidden { display: none !important; }
-
-    /* ================= AUTH GATE (@mdc.http) ================= */
-    .auth-overlay {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      background: radial-gradient(circle at top right, #132722 0%, var(--bg-main) 50%);
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 420px;
-      background: var(--bg-sidebar);
-      border-radius: 16px;
-      padding: 28px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .brand-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 18px;
-      font-weight: 700;
-    }
-    .brand-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 12px var(--accent);
-    }
-    .domain-pill {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: 12px;
-      color: var(--accent);
-      background: var(--accent-soft);
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
-    .tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: var(--bg-surface);
-      border-radius: 10px;
-      padding: 4px;
-      margin-bottom: 20px;
-      gap: 4px;
-    }
-    .tab-btn {
-      background: transparent;
-      color: var(--text-muted);
-      border: none;
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      background: var(--bg-sidebar);
-      color: var(--text-main);
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .form-group label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-    .mdc-email-wrap {
-      display: flex;
-      align-items: center;
-      background: var(--bg-surface);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .mdc-email-wrap:focus-within { background: var(--bg-hover); }
-    .mdc-email-wrap input { background: transparent; flex: 1; min-width: 0; }
-    .mdc-suffix {
-      padding: 0 12px 0 6px;
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: 13px;
-      color: var(--accent);
-      user-select: none;
-    }
-    .email-preview {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      min-height: 16px;
-    }
-    .row-between {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 4px 0 16px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-    .checkbox-label input { width: auto; accent-color: var(--accent); }
-    .alert {
-      display: none;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 14px;
-    }
-    .alert.show { display: block; }
-    .alert.error { background: rgba(239, 68, 68, 0.14); color: #fca5a5; }
-    .alert.success { background: var(--accent-soft); color: #6ee7b7; }
-
-    /* ================= WORKSPACE ================= */
     .app-shell {
       display: grid;
       grid-template-columns: 270px 1fr;
       height: 100vh;
     }
+    /* Sidebar */
     .sidebar {
-      background: var(--bg-sidebar);
+      background: #2b2d31;
       display: flex;
       flex-direction: column;
       min-height: 0;
     }
-    .server-header, .my-id-box, .user-footer {
-      padding: 12px 14px;
+    .server-header, .my-id-box, .self-controls {
+      padding: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      border-bottom: 1px solid #1e1f22;
     }
-    .font-bar {
-      padding: 0 14px 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .font-bar select {
-      flex: 1;
-      padding: 6px 10px;
-      font-size: 12px;
+    .self-controls {
+      border-bottom: none;
+      border-top: 1px solid #1e1f22;
+      background: #232428;
+      flex-wrap: wrap;
     }
     .id-text {
-      color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #00a8fc;
       font-weight: 600;
       font-size: 12px;
       word-break: break-all;
@@ -207,7 +48,7 @@
     .channel-tree {
       flex: 1;
       overflow-y: auto;
-      padding: 6px 10px;
+      padding: 8px;
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -216,7 +57,7 @@
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: #949ba4;
       padding: 12px 8px 4px;
       display: flex;
       justify-content: space-between;
@@ -224,88 +65,57 @@
     }
     .cat-add {
       background: transparent;
-      color: var(--text-muted);
-      padding: 2px 7px;
+      color: #949ba4;
+      padding: 2px 6px;
       font-size: 14px;
     }
-    .cat-add:hover { background: var(--bg-hover); color: var(--text-main); }
+    .cat-add:hover { background: #35373c; color: #fff; }
     .channel-item {
       padding: 8px 10px;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 14px;
-      color: var(--text-muted);
+      color: #b5bac1;
       user-select: none;
     }
-    .channel-item:hover:not(.locked) { background: var(--bg-surface); color: var(--text-main); }
-    .channel-item.active { background: var(--bg-surface); color: var(--accent); font-weight: 600; }
+    .channel-item:hover:not(.locked) { background: #35373c; color: #f2f3f5; }
+    .channel-item.active { background: #404249; color: #fff; font-weight: 600; }
     .channel-item.is-sub {
-      margin-left: 16px;
+      margin-left: 18px;
       font-size: 13px;
-      border-left: 2px solid var(--bg-hover);
-      border-radius: 0 8px 8px 0;
+      border-left: 2px solid #4e5058;
+      border-radius: 0 6px 6px 0;
     }
-    .channel-item.locked { opacity: 0.5; cursor: not-allowed; }
+    .channel-item.locked { opacity: 0.55; cursor: not-allowed; }
     .badge {
       font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 6px;
-      background: var(--bg-main);
-      color: var(--text-muted);
-    }
-    .user-footer {
-      background: var(--bg-main);
-      margin: 10px;
-      border-radius: 10px;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 6px;
-    }
-    .user-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    .user-email-mini {
-      font-size: 11px;
-      color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      word-break: break-all;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #1e1f22;
+      color: #b5bac1;
     }
 
     /* Main Stage */
     .main-stage {
       display: flex;
       flex-direction: column;
-      background: var(--bg-main);
+      background: #313338;
       min-height: 0;
     }
     .stage-header {
       padding: 12px 18px;
+      border-bottom: 1px solid #232428;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      background: var(--bg-sidebar);
     }
     .stage-header h2 { margin: 0; font-size: 16px; }
-    .stage-sub { font-size: 12px; color: var(--text-muted); }
-
-    /* Top Floating Audio Pill (Non-Discord layout) */
-    .audio-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--bg-main);
-      padding: 5px;
-      border-radius: 10px;
-      flex-wrap: wrap;
-    }
+    .stage-sub { font-size: 12px; color: #949ba4; }
     .stage-body {
       flex: 1;
       display: flex;
@@ -315,49 +125,46 @@
 
     /* Inputs & Buttons */
     input, textarea, select {
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 9px 12px;
+      border-radius: 6px;
       border: none;
-      background: var(--bg-surface);
-      color: var(--text-main);
+      background: #1e1f22;
+      color: #f2f3f5;
       font-size: 13px;
       font-family: inherit;
       outline: none;
     }
-    input:focus, textarea:focus, select:focus { background: var(--bg-hover); }
     button {
-      background: var(--accent);
-      color: #05261c;
+      background: #5865f2;
+      color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 8px 12px;
       font-size: 13px;
       font-weight: 600;
-      font-family: inherit;
       cursor: pointer;
       transition: 0.15s;
     }
-    button:hover:not(:disabled) { background: var(--accent-hover); color: #fff; }
-    .btn-full { width: 100%; padding: 11px; font-size: 14px; }
-    .btn-small { padding: 5px 9px; font-size: 12px; background: var(--bg-surface); color: var(--text-main); }
-    .btn-small:hover { background: var(--bg-hover); color: #fff; }
-    .btn-mute { background: var(--bg-surface); color: var(--text-main); font-size: 12px; padding: 6px 10px; }
-    .btn-mute.is-on { background: var(--accent-soft); color: var(--accent); }
-    .btn-hangup { background: var(--danger); color: #fff; }
-    .btn-hangup:hover { background: #dc2626; }
+    button:hover:not(:disabled) { background: #4752c4; }
+    .btn-small { padding: 5px 9px; font-size: 12px; background: #4e5058; }
+    .btn-small:hover { background: #5c5f66; }
+    .btn-mute { background: #4e5058; }
+    .btn-hangup { background: #da373c; }
+    .btn-hangup:hover { background: #a1282c; }
 
     /* Voice Room */
     .quick-call { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .voice-grid {
       padding: 14px 18px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 10px;
-      background: var(--bg-sidebar);
+      background: #2b2d31;
+      border-bottom: 1px solid #232428;
     }
     .member-card {
-      background: var(--bg-surface);
-      border-radius: 10px;
+      background: #313338;
+      border-radius: 8px;
       padding: 12px;
       display: flex;
       flex-direction: column;
@@ -366,68 +173,64 @@
     }
     .member-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 
-    /* Chat Room (Clean Hover-Only Actions) */
+    /* Chat Room */
     .chat-feed {
       flex: 1;
       overflow-y: auto;
       padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
     }
     .msg-item {
-      background: transparent;
+      background: #2b2d31;
       padding: 10px 14px;
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 14px;
-      line-height: 1.5;
-      transition: background 0.12s;
+      line-height: 1.45;
     }
-    .msg-item:hover { background: var(--bg-sidebar); }
     .msg-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 4px;
     }
-    .msg-meta { font-size: 12px; color: var(--text-muted); }
-    .msg-meta strong { color: var(--accent); margin-right: 6px; font-weight: 600; }
+    .msg-meta { font-size: 12px; color: #949ba4; }
+    .msg-meta strong { color: #f2f3f5; margin-right: 6px; }
     .msg-reply-ref {
       font-size: 12px;
-      color: var(--text-muted);
-      background: var(--bg-surface);
+      color: #b5bac1;
+      background: #232428;
       padding: 4px 8px;
-      border-left: 3px solid var(--accent);
+      border-left: 3px solid #5865f2;
       border-radius: 4px;
       margin-bottom: 6px;
     }
-    .msg-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
-    .msg-top .btn-small, .msg-actions .hover-only { opacity: 0; transition: opacity 0.15s; }
-    .msg-item:hover .msg-top .btn-small, .msg-item:hover .msg-actions .hover-only { opacity: 1; }
+    .msg-actions { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
     .react-btn {
-      background: var(--bg-surface);
-      color: var(--text-main);
+      background: #232428;
+      color: #dbdee1;
       padding: 3px 8px;
       font-size: 12px;
       border-radius: 12px;
     }
-    .react-btn:hover { background: var(--bg-hover); }
+    .react-btn:hover { background: #3f4147; }
     .reply-banner {
-      padding: 8px 16px;
-      background: var(--bg-sidebar);
+      padding: 6px 16px;
+      background: #232428;
       font-size: 12px;
-      color: var(--text-muted);
+      color: #b5bac1;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .chat-input-bar {
-      padding: 12px 18px 16px;
+      padding: 12px 16px;
       display: flex;
       gap: 8px;
-      background: var(--bg-main);
+      background: #2b2d31;
     }
-    .chat-input-bar input { flex: 1; padding: 12px 14px; }
+    .chat-input-bar input { flex: 1; }
 
     /* Post / Forum Room */
     .post-layout {
@@ -439,9 +242,9 @@
       gap: 16px;
     }
     .post-composer {
-      background: var(--bg-sidebar);
+      background: #2b2d31;
       padding: 14px;
-      border-radius: 12px;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -450,130 +253,50 @@
     .post-composer-row input { flex: 1; min-width: 180px; }
     .tag-bar { display: flex; gap: 6px; flex-wrap: wrap; }
     .tag-pill {
-      background: var(--bg-sidebar);
-      color: var(--text-muted);
-      padding: 5px 12px;
+      background: #2b2d31;
+      color: #b5bac1;
+      padding: 5px 10px;
       border-radius: 14px;
       font-size: 12px;
     }
-    .tag-pill.active { background: var(--accent); color: #05261c; }
+    .tag-pill.active { background: #5865f2; color: #fff; }
     .post-card {
-      background: var(--bg-sidebar);
-      border-radius: 12px;
+      background: #2b2d31;
+      border-radius: 10px;
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
     .post-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .post-title { margin: 0; font-size: 16px; color: var(--text-main); }
-    .post-body { margin: 0; font-size: 14px; color: #d1d5db; white-space: pre-wrap; line-height: 1.55; }
-    .post-img { max-width: 100%; max-height: 280px; border-radius: 10px; object-fit: cover; }
+    .post-title { margin: 0; font-size: 16px; color: #fff; }
+    .post-body { margin: 0; font-size: 14px; color: #dbdee1; white-space: pre-wrap; line-height: 1.5; }
+    .post-img { max-width: 100%; max-height: 280px; border-radius: 8px; object-fit: cover; }
     .post-footer { display: flex; gap: 10px; align-items: center; }
     .comment-box {
-      background: var(--bg-main);
-      border-radius: 10px;
+      background: #232428;
+      border-radius: 8px;
       padding: 10px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
-    .comment-item { font-size: 13px; color: #d1d5db; }
+    .comment-item { font-size: 13px; color: #dbdee1; }
     .comment-form { display: flex; gap: 6px; }
-    .comment-form input { flex: 1; padding: 8px 10px; }
+    .comment-form input { flex: 1; padding: 7px 10px; }
 
     @media (max-width: 768px) {
       .app-shell { grid-template-columns: 1fr; }
-      .sidebar { max-height: 40vh; }
+      .sidebar { max-height: 36vh; }
     }
   </style>
 </head>
 <body>
-
-  <!-- ================= AUTH GATE SCREEN ================= -->
-  <section id="auth-gate" class="auth-overlay">
-    <main class="auth-card">
-      <div class="brand">
-        <div class="brand-title">
-          <span class="brand-dot"></span>
-          <span>MDC Access</span>
-        </div>
-        <span class="domain-pill">@mdc.http</span>
-      </div>
-
-      <div id="auth-alert" class="alert"></div>
-
-      <div class="tabs">
-        <button type="button" id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">ເຂົ້າສູ່ລະບົບ (Log In)</button>
-        <button type="button" id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">ສ້າງບັນຊີ (Register)</button>
-      </div>
-
-      <form id="form-login" onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label for="login-handle">ອີເມວ MDC</label>
-          <div class="mdc-email-wrap">
-            <input id="login-handle" type="text" placeholder="username" autocomplete="username" required />
-            <span class="mdc-suffix">@mdc.http</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="login-password">ລະຫັດຜ່ານ</label>
-          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
-        </div>
-        <div class="row-between">
-          <label class="checkbox-label">
-            <input id="remember-me" type="checkbox" checked />
-            ຈື່ການເຂົ້າສູ່ລະບົບໄວ້
-          </label>
-          <span>Font: Eng + Lao Somvang</span>
-        </div>
-        <button type="submit" class="btn-full">ເຂົ້າສູ່ລະບົບ</button>
-      </form>
-
-      <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
-        <div class="form-group">
-          <label for="reg-display">ຊື່ສະແດງໃນຫ້ອງ (Display Name)</label>
-          <input id="reg-display" type="text" placeholder="ເຊັ່ນ Anoulak" required />
-        </div>
-        <div class="form-group">
-          <label for="reg-handle">ຕັ້ງອີເມວດັດແປງ (Name@mdc.http)</label>
-          <div class="mdc-email-wrap">
-            <input id="reg-handle" type="text" placeholder="name.dev" oninput="updateEmailPreview()" required />
-            <span class="mdc-suffix">@mdc.http</span>
-          </div>
-          <div id="reg-preview" class="email-preview">ຕົວຢ່າງ: name.dev@mdc.http</div>
-        </div>
-        <div class="form-group">
-          <label for="reg-password">ລະຫັດຜ່ານ (ຢ່າງໜ້ອຍ 6 ຕົວ)</label>
-          <input id="reg-password" type="password" placeholder="••••••••" minlength="6" required />
-        </div>
-        <div class="form-group">
-          <label for="reg-confirm">ຢືນຢັນລະຫັດຜ່ານ</label>
-          <input id="reg-confirm" type="password" placeholder="••••••••" minlength="6" required />
-        </div>
-        <button type="submit" class="btn-full">ສ້າງບັນຊີໃໝ່ (Create Account)</button>
-      </form>
-    </main>
-  </section>
-
-  <!-- ================= MAIN HUB WORKSPACE ================= -->
-  <div id="app-workspace" class="app-shell hidden">
+  <div class="app-shell">
     <aside class="sidebar">
       <div class="server-header">
-        <div class="brand-title" style="font-size: 15px;">
-          <span class="brand-dot"></span>
-          <span>MDC Hub</span>
-        </div>
-        <span class="badge">v0.3</span>
-      </div>
-
-      <div class="font-bar">
-        <span class="stage-sub">Font:</span>
-        <select id="font-selector" onchange="applyFontPreset(this.value)" aria-label="ເລືອກ Font">
-          <option value="eng_somvang">Eng + Lao Somvang</option>
-          <option value="somvang_only">Lao Somvang</option>
-          <option value="noto_lao">Eng + Noto Sans Lao</option>
-        </select>
+        <strong>My Discord Hub</strong>
+        <span class="badge">v0.2</span>
       </div>
 
       <div class="my-id-box">
@@ -583,12 +306,10 @@
 
       <nav id="channel-tree" class="channel-tree" aria-label="Channels"></nav>
 
-      <div class="user-footer">
-        <div class="user-meta">
-          <strong id="sidebar-user-name" style="font-size: 13px;">User</strong>
-          <button type="button" class="btn-small" onclick="handleLogout()">ອອກ</button>
-        </div>
-        <div id="sidebar-user-email" class="user-email-mini">user@mdc.http</div>
+      <div class="self-controls">
+        <button type="button" id="btn-mute" class="btn-mute" onclick="toggleMute()">🔇 ປິດໄມ</button>
+        <button type="button" id="btn-deafen" class="btn-mute" onclick="toggleDeafen()">🎧 ສຽງເປີດ</button>
+        <button type="button" id="btn-ptt" class="btn-mute" onclick="togglePTT()">PTT: Off</button>
       </div>
     </aside>
 
@@ -598,15 +319,7 @@
           <h2 id="active-channel-title">General Voice</h2>
           <div id="active-channel-sub" class="stage-sub">ພ້ອມໃຊ້ງານ</div>
         </div>
-
-        <div class="quick-call">
-          <div class="audio-pill">
-            <button type="button" id="btn-mute" class="btn-mute" onclick="toggleMute()">🔇 ປິດໄມ</button>
-            <button type="button" id="btn-deafen" class="btn-mute" onclick="toggleDeafen()">🎧 ສຽງເປີດ</button>
-            <button type="button" id="btn-ptt" class="btn-mute" onclick="togglePTT()">PTT: Off</button>
-          </div>
-          <div id="header-actions" class="quick-call"></div>
-        </div>
+        <div id="header-actions" class="quick-call"></div>
       </header>
 
       <div id="stage-body" class="stage-body"></div>
@@ -616,154 +329,9 @@
   <audio id="remote-audio" autoplay></audio>
 
   <script>
-    /* ================= FONT SELECTOR ================= */
-    const FONT_KEY = "mdc_font_preset_v1";
-    const FONT_PRESETS = {
-      eng_somvang: "'Inter', 'Lao Somvang', 'Noto Sans Lao', system-ui, sans-serif",
-      somvang_only: "'Lao Somvang', 'Noto Sans Lao', sans-serif",
-      noto_lao: "'Inter', 'Noto Sans Lao', system-ui, sans-serif"
-    };
-
-    function applyFontPreset(presetKey) {
-      const stack = FONT_PRESETS[presetKey] || FONT_PRESETS.eng_somvang;
-      document.documentElement.style.setProperty("--app-font", stack);
-      localStorage.setItem(FONT_KEY, presetKey);
-      const sel = document.getElementById("font-selector");
-      if (sel) sel.value = presetKey;
-    }
-
-    applyFontPreset(localStorage.getItem(FONT_KEY) || "eng_somvang");
-
-    /* ================= AUTH (@mdc.http) ================= */
-    const DOMAIN = "@mdc.http";
-    const USERS_KEY = "mdc_users_v1";
-    const SESSION_KEY = "mdc_current_session_v1";
-
-    function normalizeMdcEmail(raw) {
-      let clean = raw.trim().toLowerCase();
-      if (clean.endsWith(DOMAIN)) clean = clean.slice(0, -DOMAIN.length);
-      const valid = /^[a-z0-9._-]{3,32}$/.test(clean);
-      return { valid, handle: clean, email: clean ? clean + DOMAIN : "" };
-    }
-
-    function updateEmailPreview() {
-      const val = document.getElementById("reg-handle").value;
-      const preview = document.getElementById("reg-preview");
-      if (!val.trim()) {
-        preview.textContent = "ຕົວຢ່າງ: name.dev@mdc.http";
-        preview.style.color = "var(--text-muted)";
-        return;
-      }
-      const res = normalizeMdcEmail(val);
-      if (res.valid) {
-        preview.textContent = "✓ ໃຊ້ໄດ້: " + res.email;
-        preview.style.color = "var(--accent)";
-      } else {
-        preview.textContent = "✕ ໃຊ້ໄດ້ສະເພາະ a-z, 0-9, . _ - (3–32 ຕົວ)";
-        preview.style.color = "var(--warning)";
-      }
-    }
-
-    async function hashPassword(password) {
-      const data = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    function getStoredUsers() {
-      try { return JSON.parse(localStorage.getItem(USERS_KEY) || "[]"); }
-      catch { return []; }
-    }
-
-    function getSession() {
-      const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
-      try { return raw ? JSON.parse(raw) : null; }
-      catch { return null; }
-    }
-
-    function setSession(user, remember) {
-      const payload = JSON.stringify({
-        id: user.id,
-        displayName: user.displayName,
-        email: user.email,
-        role: user.role,
-        joinPower: user.joinPower,
-        movePower: user.movePower
-      });
-      if (remember) localStorage.setItem(SESSION_KEY, payload);
-      else sessionStorage.setItem(SESSION_KEY, payload);
-    }
-
-    function showAuthAlert(msg, type = "error") {
-      const box = document.getElementById("auth-alert");
-      box.textContent = msg;
-      box.className = `alert show ${type}`;
-    }
-
-    function switchAuthTab(mode) {
-      document.getElementById("auth-alert").className = "alert";
-      const isLogin = mode === "login";
-      document.getElementById("tab-login").classList.toggle("active", isLogin);
-      document.getElementById("tab-register").classList.toggle("active", !isLogin);
-      document.getElementById("form-login").classList.toggle("hidden", !isLogin);
-      document.getElementById("form-register").classList.toggle("hidden", isLogin);
-    }
-
-    async function handleRegister(event) {
-      event.preventDefault();
-      const displayName = document.getElementById("reg-display").value.trim();
-      const parsed = normalizeMdcEmail(document.getElementById("reg-handle").value);
-      const password = document.getElementById("reg-password").value;
-      const confirm = document.getElementById("reg-confirm").value;
-
-      if (!parsed.valid) return showAuthAlert("ຊື່ອີເມວບໍ່ຖືກຕ້ອງ (ໃຊ້ a-z, 0-9, . _ - 3–32 ຕົວ)");
-      if (password !== confirm) return showAuthAlert("ລະຫັດຜ່ານ ແລະ ການຢືນຢັນບໍ່ກົງກັນ");
-
-      const users = getStoredUsers();
-      if (users.some(u => u.email === parsed.email)) return showAuthAlert(`ອີເມວ ${parsed.email} ມີຜູ້ໃຊ້ແລ້ວ`);
-
-      const newUser = {
-        id: "u_" + Date.now(),
-        displayName,
-        email: parsed.email,
-        passwordHash: await hashPassword(password),
-        role: "Member",
-        joinPower: 50,
-        movePower: 50
-      };
-      users.push(newUser);
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
-      setSession(newUser, true);
-      bootWorkspace();
-    }
-
-    async function handleLogin(event) {
-      event.preventDefault();
-      const parsed = normalizeMdcEmail(document.getElementById("login-handle").value);
-      const password = document.getElementById("login-password").value;
-      const remember = document.getElementById("remember-me").checked;
-
-      if (!parsed.valid) return showAuthAlert("ຮູບແບບອີເມວ @mdc.http ບໍ່ຖືກຕ້ອງ");
-      const user = getStoredUsers().find(u => u.email === parsed.email);
-      if (!user) return showAuthAlert(`ບໍ່ພົບບັນຊີ ${parsed.email}`);
-      if (user.passwordHash !== await hashPassword(password)) return showAuthAlert("ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ");
-
-      setSession(user, remember);
-      bootWorkspace();
-    }
-
-    function handleLogout() {
-      localStorage.removeItem(SESSION_KEY);
-      sessionStorage.removeItem(SESSION_KEY);
-      hangUp();
-      document.getElementById("app-workspace").classList.add("hidden");
-      document.getElementById("auth-gate").classList.remove("hidden");
-    }
-
-    /* ================= WORKSPACE STATE & LOGIC ================= */
     const state = {
       currentUserId: "me",
-      activeChannelId: "ch_text_general",
+      activeChannelId: "ch_voice_general",
       replyTo: null,
       activePostTag: "All",
       isMuted: false,
@@ -773,21 +341,24 @@
       callStatus: "ພ້ອມໃຊ້ງານ",
       inCall: false,
       channels: [
+        // Text Channels
         { id: "ch_text_general", type: "text", parentId: null, name: "ແຊັດທົ່ວໄປ", desc: "ສົນທະນາທົ່ວໄປໃນທີມ", neededJoinPower: 0 },
         { id: "ch_text_dev", type: "text", parentId: null, name: "dev-chat", desc: "ແລກປ່ຽນໂຄ້ດ ແລະ ແຈ້ງບັກ", neededJoinPower: 0 },
+        // Post / Forum Channels
         { id: "ch_post_news", type: "post", parentId: null, name: "ປະກາດ-ໂພສ", desc: "ໂພສຂ່າວສານ, ອັບເດດ ແລະ ຄອມເມັ້ນ", neededJoinPower: 0 },
         { id: "ch_post_showcase", type: "post", parentId: null, name: "ແຊຣ໌ຜົນງານ", desc: "ໂພສຮູບ/ລິ້ງຜົນງານຂອງສະມາຊິກ", neededJoinPower: 0 },
+        // Voice Channels (with TS3 Sub-channels & Permissions)
         { id: "ch_voice_general", type: "voice", parentId: null, name: "General Voice", desc: "ຫ້ອງໂທສຽງຫຼັກ", neededJoinPower: 0 },
         { id: "ch_voice_squad1", type: "voice", parentId: null, name: "Squad 1", desc: "ຫ້ອງທີມ (Join Power 10)", neededJoinPower: 10 },
         { id: "ch_voice_sub_a", type: "voice", parentId: "ch_voice_squad1", name: "Sub-channel A", desc: "ຫ້ອງຍ່ອຍຍຸດທະວິທີ (Join Power 25)", neededJoinPower: 25 }
       ],
       users: {
-        me: { id: "me", name: "You", email: "", joinPower: 50, movePower: 50, neededMovePower: 50 },
+        me: { id: "me", name: "You", joinPower: 50, movePower: 50, neededMovePower: 50 },
         peer_guest: { id: "peer_guest", name: "Guest Member", joinPower: 15, movePower: 5, neededMovePower: 20 }
       },
       messagesByChannel: {
         ch_text_general: [
-          { id: "m1", sender: "System", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ ແຊັດທົ່ວໄປ", reply: null, reactions: { "👍": 1 } }
+          { id: "m1", sender: "System", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ #ແຊັດທົ່ວໄປ", reply: null, reactions: { "👍": 1 } }
         ],
         ch_text_dev: [
           { id: "m2", sender: "System", time: "09:05", text: "ສົ່ງລິ້ງ Commit ຫຼື ຖາມບັນຫາໄດ້ທີ່ນີ້", reply: null, reactions: {} }
@@ -800,56 +371,59 @@
         ch_post_news: [
           {
             id: "p1",
-            author: "System",
-            time: "ມື້ນີ້",
+            author: "You",
+            time: "ມື້ນີ້ 09:10",
             tag: "ອັບເດດ",
-            title: "ເປີດໃຊ້ງານ MDC Account (@mdc.http) + Font Lao Somvang",
-            body: "ຕອນນີ້ສາມາດລັອກອິນດ້ວຍອີເມວ @mdc.http ແລະ ເລືອກ Font ພາສາອັງກິດຄູ່ກັບ Lao Somvang ໄດ້ແລ້ວ.",
+            title: "ເປີດໃຊ້ງານລະບົບ ຫ້ອງແຊັດ + ຫ້ອງໂພສ + ຫ້ອງໂທສຽງ",
+            body: "ຕອນນີ້ສາມາດສະຫຼັບຫ້ອງລະຫວ່າງ Text Chat, Post/Forum ແລະ Voice Channel ໄດ້ໃນໜ້າດຽວແລ້ວ!",
             imageUrl: "",
-            likes: 1,
+            likes: 2,
             likedByMe: false,
-            comments: []
+            comments: [{ author: "Guest Member", text: "ໃຊ້ງານງ່າຍຂຶ້ນຫຼາຍ!" }]
           }
         ],
         ch_post_showcase: []
       }
     };
 
-    let peer = null;
-    let localStream = null;
-    let currentCall = null;
-
-    function initPeer() {
-      if (peer) return;
-      peer = new Peer();
-      peer.on("open", id => {
-        document.getElementById("my-peer-id").innerText = id;
-      });
-      peer.on("error", err => {
-        state.callStatus = "Error: " + err.type;
-        renderStageHeader();
-      });
-      peer.on("call", async call => {
-        try {
-          state.callStatus = "ກຳລັງຮັບສາຍ...";
-          renderStageHeader();
-          localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          applyAudioTrackStates();
-          call.answer(localStream);
-          setupCallEvents(call);
-        } catch (err) {
-          alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
-        }
-      });
-    }
+    const peer = new Peer();
+    let localStream;
+    let currentCall;
 
     function escapeHtml(str) {
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
     function nowTime() {
       return new Date().toLocaleTimeString("lo-LA", { hour: "2-digit", minute: "2-digit" });
     }
+
+    /* PeerJS Voice */
+    peer.on("open", id => {
+      document.getElementById("my-peer-id").innerText = id;
+    });
+
+    peer.on("error", err => {
+      state.callStatus = "Error: " + err.type;
+      renderStageHeader();
+    });
+
+    peer.on("call", async call => {
+      try {
+        state.callStatus = "ກຳລັງຮັບສາຍ...";
+        renderStageHeader();
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        applyAudioTrackStates();
+        call.answer(localStream);
+        setupCallEvents(call);
+      } catch (err) {
+        alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
+      }
+    });
 
     async function startCall() {
       const input = document.getElementById("remote-id-input");
@@ -871,6 +445,7 @@
       currentCall = call;
       state.inCall = true;
       renderStageHeader();
+
       call.on("stream", remoteStream => {
         const audioEl = document.getElementById("remote-audio");
         audioEl.srcObject = remoteStream;
@@ -878,6 +453,7 @@
         state.callStatus = "🟢 ເຊື່ອມຕໍ່ສຽງສຳເລັດ";
         renderStageHeader();
       });
+
       call.on("close", resetCallUI);
     }
 
@@ -904,18 +480,14 @@
     function toggleMute() {
       state.isMuted = !state.isMuted;
       applyAudioTrackStates();
-      const btn = document.getElementById("btn-mute");
-      btn.innerText = state.isMuted ? "🔊 ເປີດໄມ" : "🔇 ປິດໄມ";
-      btn.classList.toggle("is-on", state.isMuted);
+      document.getElementById("btn-mute").innerText = state.isMuted ? "🔊 ເປີດໄມ" : "🔇 ປິດໄມ";
       renderStageBody();
     }
 
     function toggleDeafen() {
       state.isDeafened = !state.isDeafened;
       document.getElementById("remote-audio").muted = state.isDeafened;
-      const btn = document.getElementById("btn-deafen");
-      btn.innerText = state.isDeafened ? "🔇 ສຽງປິດ" : "🎧 ສຽງເປີດ";
-      btn.classList.toggle("is-on", state.isDeafened);
+      document.getElementById("btn-deafen").innerText = state.isDeafened ? "🔇 ສຽງປິດ" : "🎧 ສຽງເປີດ";
       renderStageBody();
     }
 
@@ -923,9 +495,7 @@
       state.isPTT = !state.isPTT;
       state.pttPressed = false;
       applyAudioTrackStates();
-      const btn = document.getElementById("btn-ptt");
-      btn.innerText = state.isPTT ? "PTT: On (Space)" : "PTT: Off";
-      btn.classList.toggle("is-on", state.isPTT);
+      document.getElementById("btn-ptt").innerText = state.isPTT ? "PTT: On (Space)" : "PTT: Off";
     }
 
     window.addEventListener("keydown", e => {
@@ -936,6 +506,7 @@
         applyAudioTrackStates();
       }
     });
+
     window.addEventListener("keyup", e => {
       if (state.isPTT && e.code === "Space") {
         state.pttPressed = false;
@@ -949,9 +520,11 @@
       alert("ກັອບປີ້ ID ແລ້ວ: " + id);
     }
 
+    /* Permissions (TS3 Style) */
     function canExecute(actorId, action, { targetId = null, targetChannelId = null } = {}) {
       const actor = state.users[actorId];
       if (!actor) return { allowed: false, reason: "ບໍ່ພົບຜູ້ໃຊ້" };
+
       if (action === "join_channel") {
         const ch = state.channels.find(c => c.id === targetChannelId);
         if (!ch) return { allowed: false, reason: "ບໍ່ພົບຫ້ອງ" };
@@ -959,6 +532,7 @@
           ? { allowed: true }
           : { allowed: false, reason: `ຕ້ອງການ Join Power ${ch.neededJoinPower}` };
       }
+
       if (action === "move_client") {
         const target = state.users[targetId];
         const ch = state.channels.find(c => c.id === targetChannelId);
@@ -970,6 +544,7 @@
       return { allowed: false, reason: "Unknown action" };
     }
 
+    /* Channel Navigation & Creation */
     function selectChannel(channelId) {
       const check = canExecute(state.currentUserId, "join_channel", { targetChannelId: channelId });
       if (!check.allowed) return alert("ເຂົ້າຫ້ອງບໍ່ໄດ້: " + check.reason);
@@ -983,26 +558,47 @@
       const label = type === "voice" ? "ຫ້ອງໂທ/Sub-channel" : type === "text" ? "ຫ້ອງແຊັດ" : "ຫ້ອງໂພສ";
       const name = prompt(`ຊື່ ${label} ໃໝ່:`);
       if (!name || !name.trim()) return;
+
       let parentId = null;
       if (type === "voice") {
         const active = state.channels.find(c => c.id === state.activeChannelId);
-        if (active && active.type === "voice") parentId = active.parentId || active.id;
+        if (active && active.type === "voice") {
+          parentId = active.parentId ? active.parentId : active.id;
+        }
       }
+
       const id = `ch_${type}_${Date.now()}`;
-      state.channels.push({ id, type, parentId, name: name.trim(), desc: `ສ້າງໃໝ່ (${label})`, neededJoinPower: type === "voice" ? 10 : 0 });
+      state.channels.push({
+        id,
+        type,
+        parentId,
+        name: name.trim(),
+        desc: `ສ້າງໃໝ່ (${label})`,
+        neededJoinPower: type === "voice" ? 10 : 0
+      });
       if (type === "post") state.postsByChannel[id] = [];
       else state.messagesByChannel[id] = [{ id: "sys_" + Date.now(), sender: "System", time: nowTime(), text: `ສ້າງຫ້ອງ "${name.trim()}" ແລ້ວ`, reply: null, reactions: {} }];
+
       state.activeChannelId = id;
       renderAll();
     }
 
+    /* Text Chat Functions */
     function sendChatMessage(event) {
       event.preventDefault();
       const input = document.getElementById("chat-input");
       const text = input.value.trim();
       if (!text) return;
+
       const list = state.messagesByChannel[state.activeChannelId] || [];
-      list.push({ id: "m_" + Date.now(), sender: state.users.me.name, time: nowTime(), text, reply: state.replyTo, reactions: {} });
+      list.push({
+        id: "m_" + Date.now(),
+        sender: state.users[state.currentUserId].name,
+        time: nowTime(),
+        text,
+        reply: state.replyTo,
+        reactions: {}
+      });
       state.messagesByChannel[state.activeChannelId] = list;
       state.replyTo = null;
       input.value = "";
@@ -1010,7 +606,8 @@
     }
 
     function setReplyTo(msgId) {
-      const target = (state.messagesByChannel[state.activeChannelId] || []).find(m => m.id === msgId);
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      const target = list.find(m => m.id === msgId);
       if (!target) return;
       state.replyTo = { sender: target.sender, text: target.text };
       renderStageBody();
@@ -1018,17 +615,24 @@
       if (input) input.focus();
     }
 
-    function clearReply() { state.replyTo = null; renderStageBody(); }
+    function clearReply() {
+      state.replyTo = null;
+      renderStageBody();
+    }
 
     function toggleReaction(msgId, emoji) {
-      const msg = (state.messagesByChannel[state.activeChannelId] || []).find(m => m.id === msgId);
+      const list = state.messagesByChannel[state.activeChannelId] || [];
+      const msg = list.find(m => m.id === msgId);
       if (!msg) return;
       msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
       renderStageBody();
     }
 
     function moveGuestToActiveChannel() {
-      const check = canExecute(state.currentUserId, "move_client", { targetId: "peer_guest", targetChannelId: state.activeChannelId });
+      const check = canExecute(state.currentUserId, "move_client", {
+        targetId: "peer_guest",
+        targetChannelId: state.activeChannelId
+      });
       if (!check.allowed) return alert("ຍ້າຍບໍ່ໄດ້: " + check.reason);
       const list = state.messagesByChannel[state.activeChannelId] || [];
       list.push({ id: "m_" + Date.now(), sender: "System", time: nowTime(), text: "ຍ້າຍ Guest Member ເຂົ້າຫ້ອງນີ້ສຳເລັດ", reply: null, reactions: {} });
@@ -1036,6 +640,7 @@
       renderStageBody();
     }
 
+    /* Post / Forum Functions */
     function createPost(event) {
       event.preventDefault();
       const title = document.getElementById("post-title").value.trim();
@@ -1043,14 +648,27 @@
       const tag = document.getElementById("post-tag").value;
       const imageUrl = document.getElementById("post-img").value.trim();
       if (!title || !body) return alert("ກະລຸນາໃສ່ຫົວຂໍ້ ແລະ ເນື້ອຫາໂພສ");
+
       const list = state.postsByChannel[state.activeChannelId] || [];
-      list.unshift({ id: "p_" + Date.now(), author: state.users.me.name, time: nowTime(), tag, title, body, imageUrl, likes: 0, likedByMe: false, comments: [] });
+      list.unshift({
+        id: "p_" + Date.now(),
+        author: state.users[state.currentUserId].name,
+        time: nowTime(),
+        tag,
+        title,
+        body,
+        imageUrl,
+        likes: 0,
+        likedByMe: false,
+        comments: []
+      });
       state.postsByChannel[state.activeChannelId] = list;
       renderStageBody();
     }
 
     function toggleLikePost(postId) {
-      const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
+      const list = state.postsByChannel[state.activeChannelId] || [];
+      const post = list.find(p => p.id === postId);
       if (!post) return;
       post.likedByMe = !post.likedByMe;
       post.likes += post.likedByMe ? 1 : -1;
@@ -1062,42 +680,54 @@
       const input = event.target.querySelector("input");
       const text = input.value.trim();
       if (!text) return;
-      const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
+      const list = state.postsByChannel[state.activeChannelId] || [];
+      const post = list.find(p => p.id === postId);
       if (!post) return;
-      post.comments.push({ author: state.users.me.name, text });
+      post.comments.push({ author: state.users[state.currentUserId].name, text });
       renderStageBody();
     }
 
-    function setPostTagFilter(tag) { state.activePostTag = tag; renderStageBody(); }
+    function setPostTagFilter(tag) {
+      state.activePostTag = tag;
+      renderStageBody();
+    }
 
+    /* Renderers */
     function renderChannelTree() {
       const nav = document.getElementById("channel-tree");
       nav.innerHTML = "";
-      const me = state.users.me;
+      const me = state.users[state.currentUserId];
+
       const groups = [
-        { type: "text", title: "ຫ້ອງແຊັດ (Text)", icon: "•" },
-        { type: "post", title: "ຫ້ອງໂພສ (Forum)", icon: "▤" },
-        { type: "voice", title: "ຫ້ອງໂທສຽງ (Voice)", icon: "◉" }
+        { type: "text", title: "ຫ້ອງແຊັດ (Text)", icon: "#" },
+        { type: "post", title: "ຫ້ອງໂພສ (Forum)", icon: "📝" },
+        { type: "voice", title: "ຫ້ອງໂທສຽງ (Voice)", icon: "🔊" }
       ];
+
       groups.forEach(group => {
         const header = document.createElement("div");
         header.className = "cat-label";
-        header.innerHTML = `<span>${group.title}</span><button type="button" class="cat-add" onclick="addChannel('${group.type}')">+</button>`;
+        header.innerHTML = `
+          <span>${group.title}</span>
+          <button type="button" class="cat-add" title="ເພີ່ມຫ້ອງ" onclick="addChannel('${group.type}')">+</button>
+        `;
         nav.appendChild(header);
 
         const renderLevel = (parentId) => {
-          state.channels.filter(c => c.type === group.type && c.parentId === parentId).forEach(ch => {
-            const locked = me.joinPower < ch.neededJoinPower;
-            const div = document.createElement("div");
-            div.className = `channel-item ${ch.parentId ? "is-sub" : ""} ${ch.id === state.activeChannelId ? "active" : ""} ${locked ? "locked" : ""}`;
-            div.onclick = () => selectChannel(ch.id);
-            div.innerHTML = `
-              <span>${ch.parentId ? "↳ " : group.icon + " "}${escapeHtml(ch.name)}</span>
-              ${ch.type === "voice" ? `<span class="badge">${locked ? "🔒 " + ch.neededJoinPower : "JP " + ch.neededJoinPower}</span>` : ""}
-            `;
-            nav.appendChild(div);
-            renderLevel(ch.id);
-          });
+          state.channels
+            .filter(c => c.type === group.type && c.parentId === parentId)
+            .forEach(ch => {
+              const locked = me.joinPower < ch.neededJoinPower;
+              const div = document.createElement("div");
+              div.className = `channel-item ${ch.parentId ? "is-sub" : ""} ${ch.id === state.activeChannelId ? "active" : ""} ${locked ? "locked" : ""}`;
+              div.onclick = () => selectChannel(ch.id);
+              div.innerHTML = `
+                <span>${ch.parentId ? "↳ " : group.icon + " "}${escapeHtml(ch.name)}</span>
+                ${ch.type === "voice" ? `<span class="badge">${locked ? "🔒 " + ch.neededJoinPower : "JP " + ch.neededJoinPower}</span>` : ""}
+              `;
+              nav.appendChild(div);
+              renderLevel(ch.id);
+            });
         };
         renderLevel(null);
       });
@@ -1106,14 +736,16 @@
     function renderStageHeader() {
       const ch = state.channels.find(c => c.id === state.activeChannelId);
       if (!ch) return;
-      document.getElementById("active-channel-title").innerText = ch.name;
+      const prefix = ch.type === "text" ? "# " : ch.type === "post" ? "📝 " : "🔊 ";
+      document.getElementById("active-channel-title").innerText = prefix + ch.name;
       document.getElementById("active-channel-sub").innerText = ch.type === "voice" ? state.callStatus : ch.desc;
+
       const actions = document.getElementById("header-actions");
       if (ch.type === "voice") {
         actions.innerHTML = `
           <input id="remote-id-input" type="text" placeholder="ວາງ ID ຄູ່ສາຍ..." />
           ${!state.inCall
-            ? `<button type="button" onclick="startCall()">📞 ໂທຫາ</button>`
+            ? `<button type="button" onclick="startCall()">📞 ໂທຫາ (Join Call)</button>`
             : `<button type="button" class="btn-hangup" onclick="hangUp()">📵 ວາງສາຍ</button>`}
         `;
       } else {
@@ -1137,8 +769,8 @@
             <div>${escapeHtml(m.text)}</div>
             <div class="msg-actions">
               ${reacts}
-              <button type="button" class="react-btn hover-only" onclick="toggleReaction('${m.id}','👍')">+👍</button>
-              <button type="button" class="react-btn hover-only" onclick="toggleReaction('${m.id}','🔥')">+🔥</button>
+              <button type="button" class="react-btn" onclick="toggleReaction('${m.id}','👍')">+👍</button>
+              <button type="button" class="react-btn" onclick="toggleReaction('${m.id}','🔥')">+🔥</button>
             </div>
           </div>
         `;
@@ -1164,7 +796,7 @@
       if (!ch) return;
 
       if (ch.type === "voice") {
-        const me = state.users.me;
+        const me = state.users[state.currentUserId];
         const guest = state.users.peer_guest;
         body.innerHTML = `
           <section class="voice-grid">
@@ -1173,7 +805,7 @@
                 <strong>${escapeHtml(me.name)} (JP ${me.joinPower})</strong>
                 <span class="badge">${state.isMuted ? "Muted" : "Mic On"}</span>
               </div>
-              <small class="stage-sub">${escapeHtml(me.email)} • ${state.isDeafened ? "Deafened" : "Audio On"}</small>
+              <small class="stage-sub">Audio: ${state.isDeafened ? "Deafened" : "Active"}</small>
             </div>
             <div class="member-card">
               <div class="member-top">
@@ -1190,7 +822,9 @@
       } else if (ch.type === "post") {
         const allPosts = state.postsByChannel[ch.id] || [];
         const tags = ["All", "ທົ່ວໄປ", "ອັບເດດ", "ຄຳຖາມ", "ຜົນງານ"];
-        const filtered = state.activePostTag === "All" ? allPosts : allPosts.filter(p => p.tag === state.activePostTag);
+        const filtered = state.activePostTag === "All"
+          ? allPosts
+          : allPosts.filter(p => p.tag === state.activePostTag);
 
         body.innerHTML = `
           <div class="post-layout">
@@ -1206,13 +840,15 @@
               </div>
               <textarea id="post-body" rows="3" placeholder="ຂຽນລາຍລະອຽດໂພສ..." required></textarea>
               <div class="post-composer-row">
-                <input id="post-img" type="url" placeholder="ລິ້ງຮູບພາບ (ຖ້າມີ)..." />
-                <button type="submit">ໂພສໃໝ່</button>
+                <input id="post-img" type="url" placeholder="ລິ້ງຮູບພາບ (ຖ້າມີ, ບໍ່ບັງຄັບ)..." />
+                <button type="submit">📝 ໂພສໃໝ່</button>
               </div>
             </form>
+
             <div class="tag-bar">
               ${tags.map(t => `<button type="button" class="tag-pill ${state.activePostTag === t ? "active" : ""}" onclick="setPostTagFilter('${t}')">${t}</button>`).join("")}
             </div>
+
             ${filtered.map(p => `
               <article class="post-card">
                 <div class="post-header">
@@ -1251,29 +887,7 @@
       renderStageBody();
     }
 
-    function bootWorkspace() {
-      const session = getSession();
-      if (!session) {
-        document.getElementById("auth-gate").classList.remove("hidden");
-        document.getElementById("app-workspace").classList.add("hidden");
-        return;
-      }
-
-      state.users.me.name = session.displayName;
-      state.users.me.email = session.email;
-      state.users.me.joinPower = session.joinPower ?? 50;
-      state.users.me.movePower = session.movePower ?? 50;
-
-      document.getElementById("sidebar-user-name").innerText = session.displayName;
-      document.getElementById("sidebar-user-email").innerText = session.email;
-      document.getElementById("auth-gate").classList.add("hidden");
-      document.getElementById("app-workspace").classList.remove("hidden");
-
-      initPeer();
-      renderAll();
-    }
-
-    bootWorkspace();
+    renderAll();
   </script>
 </body>
 </html>
