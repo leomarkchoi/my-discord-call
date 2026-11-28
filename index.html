@@ -1,302 +1,379 @@
 <!DOCTYPE html>
 <html lang="lo">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice, Chat &amp; Post Hub</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MDC Hub — Voice, Friends, Chat &amp; Post</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
+    @font-face {
+      font-family: 'Lao Somvang';
+      src: local('Lao Somvang'), local('LaoSomvang'), url('./fonts/LaoSomvang.ttf') format('truetype');
+      font-display: swap;
+    }
+
+    :root {
+      --bg-main: #111315;
+      --bg-sidebar: #181b1f;
+      --bg-surface: #1e2228;
+      --bg-hover: #252b33;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --accent-soft: rgba(16, 185, 129, 0.14);
+      --text-main: #f3f4f6;
+      --text-muted: #8b949e;
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+      --warning: #f59e0b;
+      --app-font: 'Inter', 'Lao Somvang', 'Noto Sans Lao', system-ui, sans-serif;
+    }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #1e1f22;
-      color: #f2f3f5;
+      font-family: var(--app-font);
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
     }
-    .app-shell {
+    .hidden { display: none !important; }
+
+    /* ================= AUTH GATE (@mdc.http) ================= */
+    .auth-overlay {
+      min-height: 100vh;
       display: grid;
-      grid-template-columns: 270px 1fr;
-      height: 100vh;
+      place-items: center;
+      padding: 20px;
+      background: radial-gradient(circle at top right, #132722 0%, var(--bg-main) 50%);
     }
-    /* Sidebar */
-    .sidebar {
-      background: #2b2d31;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-sidebar);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
     }
-    .server-header, .my-id-box, .self-controls {
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      border-bottom: 1px solid #1e1f22;
+    .brand { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .brand-title { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+    .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .domain-pill {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px; color: var(--accent); background: var(--accent-soft);
+      padding: 4px 10px; border-radius: 999px;
     }
-    .self-controls {
-      border-bottom: none;
-      border-top: 1px solid #1e1f22;
-      background: #232428;
-      flex-wrap: wrap;
-    }
-    .id-text {
-      color: #00a8fc;
-      font-weight: 600;
-      font-size: 12px;
-      word-break: break-all;
-    }
-    .channel-tree {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .cat-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #949ba4;
-      padding: 12px 8px 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .cat-add {
-      background: transparent;
-      color: #949ba4;
-      padding: 2px 6px;
-      font-size: 14px;
-    }
-    .cat-add:hover { background: #35373c; color: #fff; }
-    .channel-item {
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg-surface); border-radius: 10px; padding: 4px; margin-bottom: 20px; gap: 4px; }
+    .tab-btn { background: transparent; color: var(--text-muted); border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .tab-btn.active { background: var(--bg-sidebar); color: var(--text-main); }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .mdc-email-wrap { display: flex; align-items: center; background: var(--bg-surface); border-radius: 10px; overflow: hidden; }
+    .mdc-email-wrap:focus-within { background: var(--bg-hover); }
+    .mdc-email-wrap input { background: transparent; flex: 1; min-width: 0; }
+    .mdc-suffix { padding: 0 12px 0 6px; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; color: var(--accent); user-select: none; }
+    .email-preview { font-size: 12px; color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, monospace; min-height: 16px; }
+    .row-between { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 16px; font-size: 12px; color: var(--text-muted); }
+    .checkbox-label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .checkbox-label input { width: auto; accent-color: var(--accent); }
+    .alert { display: none; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+    .alert.show { display: block; }
+    .alert.error { background: var(--danger-soft); color: #fca5a5; }
+    .alert.success { background: var(--accent-soft); color: #6ee7b7; }
+
+    /* ================= WORKSPACE ================= */
+    .app-shell { display: grid; grid-template-columns: 275px 1fr; height: 100vh; }
+    .sidebar { background: var(--bg-sidebar); display: flex; flex-direction: column; min-height: 0; }
+    .server-header, .my-id-box { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .font-bar { padding: 0 14px 8px; display: flex; align-items: center; gap: 8px; }
+    .font-bar select { flex: 1; padding: 6px 10px; font-size: 12px; }
+    .id-text { color: var(--accent); font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 600; font-size: 12px; word-break: break-all; }
+
+    .nav-friends-btn {
+      margin: 4px 10px 6px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--bg-surface);
+      color: var(--text-main);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 14px;
-      color: #b5bac1;
-      user-select: none;
-    }
-    .channel-item:hover:not(.locked) { background: #35373c; color: #f2f3f5; }
-    .channel-item.active { background: #404249; color: #fff; font-weight: 600; }
-    .channel-item.is-sub {
-      margin-left: 18px;
       font-size: 13px;
-      border-left: 2px solid #4e5058;
-      border-radius: 0 6px 6px 0;
+      font-weight: 600;
+      cursor: pointer;
     }
-    .channel-item.locked { opacity: 0.55; cursor: not-allowed; }
-    .badge {
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #1e1f22;
-      color: #b5bac1;
+    .nav-friends-btn:hover { background: var(--bg-hover); }
+    .nav-friends-btn.active { background: var(--accent-soft); color: var(--accent); }
+
+    .channel-tree { flex: 1; overflow-y: auto; padding: 4px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .cat-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);
+      padding: 12px 8px 4px; display: flex; justify-content: space-between; align-items: center;
     }
+    .cat-add { background: transparent; color: var(--text-muted); padding: 2px 7px; font-size: 15px; }
+    .cat-add:hover { background: var(--bg-hover); color: var(--text-main); }
+
+    .channel-item {
+      padding: 8px 10px; border-radius: 8px; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; gap: 6px;
+      font-size: 14px; color: var(--text-muted); user-select: none;
+    }
+    .channel-item:hover:not(.locked) { background: var(--bg-surface); color: var(--text-main); }
+    .channel-item.active { background: var(--bg-surface); color: var(--accent); font-weight: 600; }
+    .channel-item.is-sub { margin-left: 16px; font-size: 13px; border-left: 2px solid var(--bg-hover); border-radius: 0 8px 8px 0; }
+    .channel-item.locked { opacity: 0.5; cursor: not-allowed; }
+    .channel-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .channel-right { display: flex; align-items: center; gap: 4px; }
+    .ch-del-btn {
+      background: transparent; color: var(--text-muted); padding: 2px 6px; font-size: 12px;
+      opacity: 0; border-radius: 5px;
+    }
+    .channel-item:hover .ch-del-btn { opacity: 1; }
+    .ch-del-btn:hover { background: var(--danger-soft); color: #fca5a5; }
+
+    .voice-occupants { margin: 2px 0 6px 24px; display: flex; flex-direction: column; gap: 4px; }
+    .voice-occ-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); padding: 3px 6px; border-radius: 6px; }
+    .mini-avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--bg-hover); color: var(--text-main);
+      display: grid; place-items: center; font-size: 10px; font-weight: 700;
+    }
+    .mini-avatar.speaking { box-shadow: 0 0 0 2px var(--accent); }
+
+    .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: var(--bg-main); color: var(--text-muted); }
+    .user-footer {
+      background: var(--bg-main); margin: 10px; padding: 12px; border-radius: 10px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .user-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .user-email-mini { font-size: 11px; color: var(--accent); font-family: ui-monospace, SFMono-Regular, monospace; word-break: break-all; }
 
     /* Main Stage */
-    .main-stage {
-      display: flex;
-      flex-direction: column;
-      background: #313338;
-      min-height: 0;
-    }
+    .main-stage { display: flex; flex-direction: column; background: var(--bg-main); min-height: 0; }
     .stage-header {
-      padding: 12px 18px;
-      border-bottom: 1px solid #232428;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; flex-wrap: wrap; background: var(--bg-sidebar);
     }
     .stage-header h2 { margin: 0; font-size: 16px; }
-    .stage-sub { font-size: 12px; color: #949ba4; }
-    .stage-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
+    .stage-sub { font-size: 12px; color: var(--text-muted); }
+    .stage-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
     /* Inputs & Buttons */
     input, textarea, select {
-      padding: 9px 12px;
-      border-radius: 6px;
-      border: none;
-      background: #1e1f22;
-      color: #f2f3f5;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
+      padding: 10px 12px; border-radius: 10px; border: none;
+      background: var(--bg-surface); color: var(--text-main);
+      font-size: 13px; font-family: inherit; outline: none;
     }
+    input:focus, textarea:focus, select:focus { background: var(--bg-hover); }
     button {
-      background: #5865f2;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.15s;
+      background: var(--accent); color: #05261c; border: none; border-radius: 8px;
+      padding: 8px 12px; font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: 0.15s;
     }
-    button:hover:not(:disabled) { background: #4752c4; }
-    .btn-small { padding: 5px 9px; font-size: 12px; background: #4e5058; }
-    .btn-small:hover { background: #5c5f66; }
-    .btn-mute { background: #4e5058; }
-    .btn-hangup { background: #da373c; }
-    .btn-hangup:hover { background: #a1282c; }
+    button:hover:not(:disabled) { background: var(--accent-hover); color: #fff; }
+    .btn-full { width: 100%; padding: 11px; font-size: 14px; }
+    .btn-small { padding: 5px 9px; font-size: 12px; background: var(--bg-surface); color: var(--text-main); }
+    .btn-small:hover { background: var(--bg-hover); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-danger-soft { background: var(--danger-soft); color: #fca5a5; }
+    .btn-danger-soft:hover { background: var(--danger); color: #fff; }
 
-    /* Voice Room */
-    .quick-call { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .voice-grid {
-      padding: 14px 18px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
-      background: #2b2d31;
-      border-bottom: 1px solid #232428;
+    /* ================= DISCORD-STYLE VOICE STAGE ================= */
+    .voice-workspace { flex: 1; display: grid; grid-template-columns: 1fr 330px; min-height: 0; }
+    .voice-workspace.chat-closed { grid-template-columns: 1fr; }
+    .voice-stage-col { display: flex; flex-direction: column; background: #0c0e10; min-height: 0; position: relative; }
+    .voice-call-bar { padding: 12px 18px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--bg-main); }
+    .voice-tiles {
+      flex: 1; padding: 24px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px; align-content: center; overflow-y: auto;
     }
-    .member-card {
-      background: #313338;
-      border-radius: 8px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 13px;
+    .voice-tile {
+      background: var(--bg-sidebar); border-radius: 14px; aspect-ratio: 16 / 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; position: relative; padding: 16px; transition: box-shadow 0.15s;
     }
-    .member-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .voice-tile.speaking { box-shadow: inset 0 0 0 2.5px var(--accent); }
+    .voice-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--bg-surface); color: var(--accent);
+      display: grid; place-items: center; font-size: 26px; font-weight: 700;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .voice-tile.speaking .voice-avatar {
+      box-shadow: 0 0 0 4px var(--accent-soft), 0 0 18px rgba(16, 185, 129, 0.45);
+      transform: scale(1.04);
+    }
+    .voice-tile-footer {
+      position: absolute; bottom: 10px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 12px;
+    }
+    .voice-name-pill { background: rgba(17, 19, 21, 0.78); padding: 4px 9px; border-radius: 6px; font-weight: 600; }
+    .voice-dock {
+      padding: 16px; display: flex; justify-content: center; align-items: center; gap: 12px;
+      background: linear-gradient(to top, rgba(12, 14, 16, 0.96), transparent);
+    }
+    .dock-btn {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: var(--bg-surface); color: var(--text-main); font-size: 18px; padding: 0;
+    }
+    .dock-btn:hover { background: var(--bg-hover); }
+    .dock-btn.active { background: var(--text-main); color: #111315; }
+    .dock-btn.ptt-on { background: var(--accent-soft); color: var(--accent); width: auto; padding: 0 16px; border-radius: 999px; font-size: 13px; }
+    .dock-btn.disconnect { background: var(--danger); color: #fff; width: 56px; border-radius: 999px; }
+    .dock-btn.disconnect:hover { background: #dc2626; }
+    .voice-side-chat { display: flex; flex-direction: column; background: var(--bg-main); border-left: 1px solid var(--bg-sidebar); min-height: 0; }
 
-    /* Chat Room */
-    .chat-feed {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* ================= FRIENDS VIEW ================= */
+    .friends-layout { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 820px; width: 100%; }
+    .add-friend-card { background: var(--bg-sidebar); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .add-friend-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .add-friend-row input { flex: 1; min-width: 170px; }
+    .friend-card {
+      background: var(--bg-sidebar); padding: 12px 16px; border-radius: 12px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
     }
-    .msg-item {
-      background: #2b2d31;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      line-height: 1.45;
-    }
-    .msg-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-    .msg-meta { font-size: 12px; color: #949ba4; }
-    .msg-meta strong { color: #f2f3f5; margin-right: 6px; }
-    .msg-reply-ref {
-      font-size: 12px;
-      color: #b5bac1;
-      background: #232428;
-      padding: 4px 8px;
-      border-left: 3px solid #5865f2;
-      border-radius: 4px;
-      margin-bottom: 6px;
-    }
-    .msg-actions { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
-    .react-btn {
-      background: #232428;
-      color: #dbdee1;
-      padding: 3px 8px;
-      font-size: 12px;
-      border-radius: 12px;
-    }
-    .react-btn:hover { background: #3f4147; }
-    .reply-banner {
-      padding: 6px 16px;
-      background: #232428;
-      font-size: 12px;
-      color: #b5bac1;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .chat-input-bar {
-      padding: 12px 16px;
-      display: flex;
-      gap: 8px;
-      background: #2b2d31;
-    }
-    .chat-input-bar input { flex: 1; }
+    .friend-info { display: flex; align-items: center; gap: 12px; }
+    .friend-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-surface); color: var(--accent); display: grid; place-items: center; font-weight: 700; }
+    .friend-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-    /* Post / Forum Room */
-    .post-layout {
-      flex: 1;
-      overflow-y: auto;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .post-composer {
-      background: #2b2d31;
-      padding: 14px;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    /* ================= CHAT & POSTS ================= */
+    .chat-feed { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+    .msg-item { background: transparent; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
+    .msg-item:hover { background: var(--bg-sidebar); }
+    .msg-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .msg-meta { font-size: 12px; color: var(--text-muted); }
+    .msg-meta strong { color: var(--accent); margin-right: 6px; }
+    .msg-reply-ref { font-size: 12px; color: var(--text-muted); background: var(--bg-surface); padding: 4px 8px; border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 6px; }
+    .msg-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+    .msg-top .btn-small, .msg-actions .hover-only { opacity: 0; transition: opacity 0.15s; }
+    .msg-item:hover .msg-top .btn-small, .msg-item:hover .msg-actions .hover-only { opacity: 1; }
+    .react-btn { background: var(--bg-surface); color: var(--text-main); padding: 3px 8px; font-size: 12px; border-radius: 12px; }
+    .react-btn:hover { background: var(--bg-hover); }
+    .reply-banner { padding: 8px 16px; background: var(--bg-sidebar); font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+    .chat-input-bar { padding: 12px 16px 16px; display: flex; gap: 8px; background: var(--bg-main); }
+    .chat-input-bar input { flex: 1; padding: 11px 14px; }
+
+    .post-layout { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+    .post-composer { background: var(--bg-sidebar); padding: 14px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
     .post-composer-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .post-composer-row input { flex: 1; min-width: 180px; }
     .tag-bar { display: flex; gap: 6px; flex-wrap: wrap; }
-    .tag-pill {
-      background: #2b2d31;
-      color: #b5bac1;
-      padding: 5px 10px;
-      border-radius: 14px;
-      font-size: 12px;
-    }
-    .tag-pill.active { background: #5865f2; color: #fff; }
-    .post-card {
-      background: #2b2d31;
-      border-radius: 10px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .tag-pill { background: var(--bg-sidebar); color: var(--text-muted); padding: 5px 12px; border-radius: 14px; font-size: 12px; }
+    .tag-pill.active { background: var(--accent); color: #05261c; }
+    .post-card { background: var(--bg-sidebar); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
     .post-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .post-title { margin: 0; font-size: 16px; color: #fff; }
-    .post-body { margin: 0; font-size: 14px; color: #dbdee1; white-space: pre-wrap; line-height: 1.5; }
-    .post-img { max-width: 100%; max-height: 280px; border-radius: 8px; object-fit: cover; }
+    .post-title { margin: 0; font-size: 16px; }
+    .post-body { margin: 0; font-size: 14px; color: #d1d5db; white-space: pre-wrap; line-height: 1.55; }
+    .post-img { max-width: 100%; max-height: 280px; border-radius: 10px; object-fit: cover; }
     .post-footer { display: flex; gap: 10px; align-items: center; }
-    .comment-box {
-      background: #232428;
-      border-radius: 8px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .comment-item { font-size: 13px; color: #dbdee1; }
+    .comment-box { background: var(--bg-main); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .comment-item { font-size: 13px; color: #d1d5db; }
     .comment-form { display: flex; gap: 6px; }
-    .comment-form input { flex: 1; padding: 7px 10px; }
+    .comment-form input { flex: 1; padding: 8px 10px; }
 
+    /* ================= MODAL (AUTH LOG) ================= */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); display: grid; place-items: center; padding: 20px; z-index: 1000; }
+    .modal-card { width: 100%; max-width: 480px; max-height: 80vh; background: var(--bg-sidebar); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; }
+    .log-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .log-row { background: var(--bg-surface); padding: 10px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; }
+    .log-tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+    .log-tag.LOGIN { background: var(--accent-soft); color: var(--accent); }
+    .log-tag.LOGOUT { background: var(--danger-soft); color: #fca5a5; }
+    .log-tag.REGISTER { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+
+    @media (max-width: 900px) {
+      .voice-workspace { grid-template-columns: 1fr; }
+      .voice-side-chat { max-height: 35vh; border-left: none; border-top: 1px solid var(--bg-sidebar); }
+    }
     @media (max-width: 768px) {
       .app-shell { grid-template-columns: 1fr; }
-      .sidebar { max-height: 36vh; }
+      .sidebar { max-height: 38vh; }
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
+
+  <!-- ================= AUTH GATE SCREEN ================= -->
+  <section id="auth-gate" class="auth-overlay">
+    <main class="auth-card">
+      <div class="brand">
+        <div class="brand-title"><span class="brand-dot"></span><span>MDC Access</span></div>
+        <span class="domain-pill">@mdc.http</span>
+      </div>
+
+      <div id="auth-alert" class="alert"></div>
+
+      <div class="tabs">
+        <button type="button" id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">ເຂົ້າສູ່ລະບົບ (Log In)</button>
+        <button type="button" id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">ສ້າງບັນຊີ (Register)</button>
+      </div>
+
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-handle">ອີເມວ MDC</label>
+          <div class="mdc-email-wrap">
+            <input id="login-handle" type="text" placeholder="username" autocomplete="username" required />
+            <span class="mdc-suffix">@mdc.http</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="login-password">ລະຫັດຜ່ານ</label>
+          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <div class="row-between">
+          <label class="checkbox-label"><input id="remember-me" type="checkbox" checked /> ຈື່ການເຂົ້າສູ່ລະບົບໄວ້</label>
+          <span>Eng + Lao Somvang</span>
+        </div>
+        <button type="submit" class="btn-full">ເຂົ້າສູ່ລະບົບ</button>
+      </form>
+
+      <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-display">ຊື່ສະແດງໃນຫ້ອງ (Display Name)</label>
+          <input id="reg-display" type="text" placeholder="ເຊັ່ນ Anoulak" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-handle">ຕັ້ງອີເມວດັດແປງ (Name@mdc.http)</label>
+          <div class="mdc-email-wrap">
+            <input id="reg-handle" type="text" placeholder="name.dev" oninput="updateEmailPreview()" required />
+            <span class="mdc-suffix">@mdc.http</span>
+          </div>
+          <div id="reg-preview" class="email-preview">ຕົວຢ່າງ: name.dev@mdc.http</div>
+        </div>
+        <div class="form-group">
+          <label for="reg-password">ລະຫັດຜ່ານ (ຢ່າງໜ້ອຍ 6 ຕົວ)</label>
+          <input id="reg-password" type="password" placeholder="••••••••" minlength="6" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-confirm">ຢືນຢັນລະຫັດຜ່ານ</label>
+          <input id="reg-confirm" type="password" placeholder="••••••••" minlength="6" required />
+        </div>
+        <button type="submit" class="btn-full">ສ້າງບັນຊີໃໝ່ (Create Account)</button>
+      </form>
+    </main>
+  </section>
+
+  <!-- ================= MAIN HUB WORKSPACE ================= -->
+  <div id="app-workspace" class="app-shell hidden">
     <aside class="sidebar">
       <div class="server-header">
-        <strong>My Discord Hub</strong>
-        <span class="badge">v0.2</span>
+        <div class="brand-title" style="font-size: 15px;"><span class="brand-dot"></span><span>MDC Hub</span></div>
+        <span class="badge">v0.4.2</span>
+      </div>
+
+      <div class="font-bar">
+        <span class="stage-sub">Font:</span>
+        <select id="font-selector" onchange="applyFontPreset(this.value)" aria-label="ເລືອກ Font">
+          <option value="eng_somvang">Eng + Lao Somvang</option>
+          <option value="somvang_only">Lao Somvang</option>
+          <option value="noto_lao">Eng + Noto Sans Lao</option>
+        </select>
       </div>
 
       <div class="my-id-box">
@@ -304,12 +381,33 @@
         <button type="button" class="btn-small" onclick="copyId()">Copy</button>
       </div>
 
+      <div id="nav-friends" class="nav-friends-btn" onclick="openFriendsView()">
+        <span>👥 ໝູ່ເພື່ອນ (Friends)</span>
+        <span id="friends-count-badge" class="badge">0</span>
+      </div>
+
       <nav id="channel-tree" class="channel-tree" aria-label="Channels"></nav>
 
-      <div class="self-controls">
-        <button type="button" id="btn-mute" class="btn-mute" onclick="toggleMute()">🔇 ປິດໄມ</button>
-        <button type="button" id="btn-deafen" class="btn-mute" onclick="toggleDeafen()">🎧 ສຽງເປີດ</button>
-        <button type="button" id="btn-ptt" class="btn-mute" onclick="togglePTT()">PTT: Off</button>
+      <!-- ແຖບສະຖານະ Voice + ປຸ່ມອອກຫ້ອງສຽງຢູ່ Sidebar -->
+      <div id="voice-status-bar" class="user-footer hidden" style="margin-bottom: 0; background: var(--accent-soft);">
+        <div class="user-meta">
+          <div>
+            <div style="font-size: 11px; color: var(--accent); font-weight: 700;">🔊 ເຊື່ອມຕໍ່ຫ້ອງສຽງ</div>
+            <div id="voice-status-name" style="font-size: 12px; color: var(--text-main);">General Voice</div>
+          </div>
+          <button type="button" class="btn-small btn-danger" onclick="leaveVoiceChannel()" title="ອອກຈາກຫ້ອງສຽງ">📵 ອອກ</button>
+        </div>
+      </div>
+
+      <div class="user-footer">
+        <div class="user-meta">
+          <strong id="sidebar-user-name" style="font-size: 13px;">User</strong>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn-small" onclick="openAuthLogModal()">ປະຫວັດ</button>
+            <button type="button" class="btn-small btn-danger-soft" onclick="handleLogout()">Logout</button>
+          </div>
+        </div>
+        <div id="sidebar-user-email" class="user-email-mini">user@mdc.http</div>
       </div>
     </aside>
 
@@ -319,121 +417,417 @@
           <h2 id="active-channel-title">General Voice</h2>
           <div id="active-channel-sub" class="stage-sub">ພ້ອມໃຊ້ງານ</div>
         </div>
-        <div id="header-actions" class="quick-call"></div>
+        <div id="header-actions" style="display: flex; align-items: center; gap: 8px;"></div>
       </header>
 
       <div id="stage-body" class="stage-body"></div>
     </main>
   </div>
 
-  <audio id="remote-audio" autoplay></audio>
+  <!-- ================= AUTH LOG MODAL ================= -->
+  <div id="auth-log-modal" class="modal-backdrop hidden" onclick="if(event.target === this) closeAuthLogModal()">
+    <div class="modal-card">
+      <div class="modal-head">
+        <strong>ປະຫວັດການເຂົ້າ-ອອກ (Auth Log)</strong>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="btn-small" onclick="clearAuthLogs()">ລ້າງປະຫວັດ</button>
+          <button type="button" class="btn-small" onclick="closeAuthLogModal()">✕</button>
+        </div>
+      </div>
+      <div id="auth-log-list" class="log-list"></div>
+    </div>
+  </div>
+
+  <audio id="remote-audio" autoplay playsinline></audio>
 
   <script>
+    /* ================= STORAGE KEYS ================= */
+    const FONT_KEY = "mdc_font_preset_v1";
+    const DOMAIN = "@mdc.http";
+    const USERS_KEY = "mdc_users_v1";
+    const SESSION_KEY = "mdc_current_session_v1";
+    const AUTH_LOGS_KEY = "mdc_auth_logs_v1";
+    const FRIENDS_KEY = "mdc_friends_v1";
+    const CHANNELS_KEY = "mdc_channels_v1";
+
+    /* ================= FONT SELECTOR ================= */
+    const FONT_PRESETS = {
+      eng_somvang: "'Inter', 'Lao Somvang', 'Noto Sans Lao', system-ui, sans-serif",
+      somvang_only: "'Lao Somvang', 'Noto Sans Lao', sans-serif",
+      noto_lao: "'Inter', 'Noto Sans Lao', system-ui, sans-serif"
+    };
+
+    function applyFontPreset(presetKey) {
+      document.documentElement.style.setProperty("--app-font", FONT_PRESETS[presetKey] || FONT_PRESETS.eng_somvang);
+      localStorage.setItem(FONT_KEY, presetKey);
+      const sel = document.getElementById("font-selector");
+      if (sel) sel.value = presetKey;
+    }
+    applyFontPreset(localStorage.getItem(FONT_KEY) || "eng_somvang");
+
+    /* ================= HELPERS ================= */
+    function escapeHtml(str) {
+      return String(str ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function nowTime() {
+      return new Date().toLocaleTimeString("lo-LA", { hour: "2-digit", minute: "2-digit" });
+    }
+    function initials(name) {
+      return (name || "?").trim().slice(0, 2).toUpperCase();
+    }
+
+    /* ================= AUTH & LOGS ================= */
+    function normalizeMdcEmail(raw) {
+      let clean = raw.trim().toLowerCase();
+      if (clean.endsWith(DOMAIN)) clean = clean.slice(0, -DOMAIN.length);
+      return { valid: /^[a-z0-9._-]{3,32}$/.test(clean), handle: clean, email: clean ? clean + DOMAIN : "" };
+    }
+    function updateEmailPreview() {
+      const val = document.getElementById("reg-handle").value;
+      const preview = document.getElementById("reg-preview");
+      if (!val.trim()) { preview.textContent = "ຕົວຢ່າງ: name.dev@mdc.http"; preview.style.color = "var(--text-muted)"; return; }
+      const res = normalizeMdcEmail(val);
+      preview.textContent = res.valid ? "✓ ໃຊ້ໄດ້: " + res.email : "✕ ໃຊ້ໄດ້ສະເພາະ a-z, 0-9, . _ - (3–32 ຕົວ)";
+      preview.style.color = res.valid ? "var(--accent)" : "var(--warning)";
+    }
+    async function hashPassword(password) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+    function getStoredUsers() { try { return JSON.parse(localStorage.getItem(USERS_KEY) || "[]"); } catch { return []; } }
+    function getSession() {
+      const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+      try { return raw ? JSON.parse(raw) : null; } catch { return null; }
+    }
+    function setSession(user, remember) {
+      const payload = JSON.stringify({ id: user.id, displayName: user.displayName, email: user.email, role: user.role, joinPower: user.joinPower, movePower: user.movePower });
+      if (remember) localStorage.setItem(SESSION_KEY, payload);
+      else sessionStorage.setItem(SESSION_KEY, payload);
+    }
+    function showAuthAlert(msg, type = "error") {
+      const box = document.getElementById("auth-alert");
+      box.textContent = msg;
+      box.className = `alert show ${type}`;
+    }
+    function switchAuthTab(mode) {
+      document.getElementById("auth-alert").className = "alert";
+      const isLogin = mode === "login";
+      document.getElementById("tab-login").classList.toggle("active", isLogin);
+      document.getElementById("tab-register").classList.toggle("active", !isLogin);
+      document.getElementById("form-login").classList.toggle("hidden", !isLogin);
+      document.getElementById("form-register").classList.toggle("hidden", isLogin);
+    }
+    function getAuthLogs() { try { return JSON.parse(localStorage.getItem(AUTH_LOGS_KEY) || "[]"); } catch { return []; } }
+    function recordAuthEvent(action, user) {
+      const logs = getAuthLogs();
+      logs.unshift({
+        id: "log_" + Date.now(), action,
+        displayName: user?.displayName || "Unknown",
+        email: user?.email || "-",
+        time: new Date().toLocaleString("lo-LA", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      });
+      localStorage.setItem(AUTH_LOGS_KEY, JSON.stringify(logs.slice(0, 50)));
+    }
+    function openAuthLogModal() {
+      const container = document.getElementById("auth-log-list");
+      const logs = getAuthLogs();
+      container.innerHTML = logs.length ? logs.map(i => `
+        <div class="log-row">
+          <div><strong>${escapeHtml(i.displayName)}</strong><div class="user-email-mini">${escapeHtml(i.email)}</div><div class="stage-sub">${escapeHtml(i.time)}</div></div>
+          <span class="log-tag ${escapeHtml(i.action)}">${escapeHtml(i.action)}</span>
+        </div>`).join("") : `<div class="stage-sub">ຍັງບໍ່ມີປະຫວັດການເຂົ້າ-ອອກລະບົບ</div>`;
+      document.getElementById("auth-log-modal").classList.remove("hidden");
+    }
+    function closeAuthLogModal() { document.getElementById("auth-log-modal").classList.add("hidden"); }
+    function clearAuthLogs() { localStorage.removeItem(AUTH_LOGS_KEY); openAuthLogModal(); }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      const displayName = document.getElementById("reg-display").value.trim();
+      const parsed = normalizeMdcEmail(document.getElementById("reg-handle").value);
+      const password = document.getElementById("reg-password").value;
+      const confirm = document.getElementById("reg-confirm").value;
+      if (!parsed.valid) return showAuthAlert("ຊື່ອີເມວບໍ່ຖືກຕ້ອງ (ໃຊ້ a-z, 0-9, . _ - 3–32 ຕົວ)");
+      if (password !== confirm) return showAuthAlert("ລະຫັດຜ່ານ ແລະ ການຢືນຢັນບໍ່ກົງກັນ");
+      const users = getStoredUsers();
+      if (users.some(u => u.email === parsed.email)) return showAuthAlert(`ອີເມວ ${parsed.email} ມີຜູ້ໃຊ້ແລ້ວ`);
+      const newUser = { id: "u_" + Date.now(), displayName, email: parsed.email, passwordHash: await hashPassword(password), role: "Member", joinPower: 50, movePower: 50 };
+      users.push(newUser);
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      setSession(newUser, true);
+      recordAuthEvent("REGISTER", newUser);
+      recordAuthEvent("LOGIN", newUser);
+      bootWorkspace();
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const parsed = normalizeMdcEmail(document.getElementById("login-handle").value);
+      const password = document.getElementById("login-password").value;
+      const remember = document.getElementById("remember-me").checked;
+      if (!parsed.valid) return showAuthAlert("ຮູບແບບອີເມວ @mdc.http ບໍ່ຖືກຕ້ອງ");
+      const user = getStoredUsers().find(u => u.email === parsed.email);
+      if (!user) return showAuthAlert(`ບໍ່ພົບບັນຊີ ${parsed.email}`);
+      if (user.passwordHash !== await hashPassword(password)) return showAuthAlert("ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ");
+      setSession(user, remember);
+      recordAuthEvent("LOGIN", user);
+      bootWorkspace();
+    }
+
+    function handleLogout() {
+      const current = getSession();
+      if (current) recordAuthEvent("LOGOUT", current);
+      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      leaveVoiceChannel();
+      if (peer) { peer.destroy(); peer = null; }
+      document.getElementById("login-password").value = "";
+      closeAuthLogModal();
+      document.getElementById("app-workspace").classList.add("hidden");
+      document.getElementById("auth-gate").classList.remove("hidden");
+      showAuthAlert("ອອກຈາກລະບົບ ແລະ ບັນທຶກປະຫວັດ Logout ແລ້ວ", "success");
+    }
+
+    /* ================= DEFAULT DATA & STATE ================= */
+    const DEFAULT_CHANNELS = [
+      { id: "ch_text_general", type: "text", parentId: null, name: "ແຊັດທົ່ວໄປ", desc: "ສົນທະນາທົ່ວໄປໃນທີມ", neededJoinPower: 0 },
+      { id: "ch_text_dev", type: "text", parentId: null, name: "dev-chat", desc: "ແລກປ່ຽນໂຄ້ດ ແລະ ແຈ້ງບັກ", neededJoinPower: 0 },
+      { id: "ch_post_news", type: "post", parentId: null, name: "ປະກາດ-ໂພສ", desc: "ໂພສຂ່າວສານ, ອັບເດດ ແລະ ຄອມເມັ້ນ", neededJoinPower: 0 },
+      { id: "ch_voice_general", type: "voice", parentId: null, name: "General Voice", desc: "ຫ້ອງໂທສຽງຫຼັກ", neededJoinPower: 0 },
+      { id: "ch_voice_squad1", type: "voice", parentId: null, name: "Squad 1", desc: "ຫ້ອງທີມ (Join Power 10)", neededJoinPower: 10 },
+      { id: "ch_voice_sub_a", type: "voice", parentId: "ch_voice_squad1", name: "Sub-channel A", desc: "ຫ້ອງຍ່ອຍຍຸດທະວິທີ (Join Power 25)", neededJoinPower: 25 }
+    ];
+
+    function loadChannels() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(CHANNELS_KEY));
+        return Array.isArray(saved) && saved.length ? saved : structuredClone(DEFAULT_CHANNELS);
+      } catch { return structuredClone(DEFAULT_CHANNELS); }
+    }
+    function saveChannels() { localStorage.setItem(CHANNELS_KEY, JSON.stringify(state.channels)); }
+
+    function loadFriends() {
+      try { return JSON.parse(localStorage.getItem(FRIENDS_KEY) || "[]"); }
+      catch { return []; }
+    }
+    function saveFriends() { localStorage.setItem(FRIENDS_KEY, JSON.stringify(state.friends)); }
+
     const state = {
-      currentUserId: "me",
+      viewMode: "channel",
+      friendTab: "all",
       activeChannelId: "ch_voice_general",
+      connectedVoiceChannelId: null,
+      voiceChatOpen: true,
       replyTo: null,
       activePostTag: "All",
       isMuted: false,
       isDeafened: false,
       isPTT: false,
       pttPressed: false,
-      callStatus: "ພ້ອມໃຊ້ງານ",
+      isLocalSpeaking: false,
+      isRemoteSpeaking: false,
+      callStatus: "ກຳລັງເຊື່ອມຕໍ່ PeerJS...",
       inCall: false,
-      channels: [
-        // Text Channels
-        { id: "ch_text_general", type: "text", parentId: null, name: "ແຊັດທົ່ວໄປ", desc: "ສົນທະນາທົ່ວໄປໃນທີມ", neededJoinPower: 0 },
-        { id: "ch_text_dev", type: "text", parentId: null, name: "dev-chat", desc: "ແລກປ່ຽນໂຄ້ດ ແລະ ແຈ້ງບັກ", neededJoinPower: 0 },
-        // Post / Forum Channels
-        { id: "ch_post_news", type: "post", parentId: null, name: "ປະກາດ-ໂພສ", desc: "ໂພສຂ່າວສານ, ອັບເດດ ແລະ ຄອມເມັ້ນ", neededJoinPower: 0 },
-        { id: "ch_post_showcase", type: "post", parentId: null, name: "ແຊຣ໌ຜົນງານ", desc: "ໂພສຮູບ/ລິ້ງຜົນງານຂອງສະມາຊິກ", neededJoinPower: 0 },
-        // Voice Channels (with TS3 Sub-channels & Permissions)
-        { id: "ch_voice_general", type: "voice", parentId: null, name: "General Voice", desc: "ຫ້ອງໂທສຽງຫຼັກ", neededJoinPower: 0 },
-        { id: "ch_voice_squad1", type: "voice", parentId: null, name: "Squad 1", desc: "ຫ້ອງທີມ (Join Power 10)", neededJoinPower: 10 },
-        { id: "ch_voice_sub_a", type: "voice", parentId: "ch_voice_squad1", name: "Sub-channel A", desc: "ຫ້ອງຍ່ອຍຍຸດທະວິທີ (Join Power 25)", neededJoinPower: 25 }
-      ],
+      remotePeerId: null,
+      channels: loadChannels(),
+      friends: loadFriends(),
       users: {
-        me: { id: "me", name: "You", joinPower: 50, movePower: 50, neededMovePower: 50 },
-        peer_guest: { id: "peer_guest", name: "Guest Member", joinPower: 15, movePower: 5, neededMovePower: 20 }
+        me: { id: "me", name: "You", email: "", joinPower: 50, movePower: 50, neededMovePower: 50 }
       },
       messagesByChannel: {
-        ch_text_general: [
-          { id: "m1", sender: "System", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ #ແຊັດທົ່ວໄປ", reply: null, reactions: { "👍": 1 } }
-        ],
-        ch_text_dev: [
-          { id: "m2", sender: "System", time: "09:05", text: "ສົ່ງລິ້ງ Commit ຫຼື ຖາມບັນຫາໄດ້ທີ່ນີ້", reply: null, reactions: {} }
-        ],
-        ch_voice_general: [
-          { id: "m3", sender: "System", time: "09:00", text: "ແຊັດຍ່ອຍປະຈຳຫ້ອງ General Voice", reply: null, reactions: {} }
-        ]
+        ch_text_general: [{ id: "m1", sender: "System", time: "09:00", text: "ຍິນດີຕ້ອນຮັບສູ່ຫ້ອງ ແຊັດທົ່ວໄປ", reply: null, reactions: { "👍": 1 } }],
+        ch_voice_general: [{ id: "m3", sender: "System", time: "09:00", text: "ແຊັດຍ່ອຍປະຈຳຫ້ອງ General Voice", reply: null, reactions: {} }]
       },
       postsByChannel: {
-        ch_post_news: [
-          {
-            id: "p1",
-            author: "You",
-            time: "ມື້ນີ້ 09:10",
-            tag: "ອັບເດດ",
-            title: "ເປີດໃຊ້ງານລະບົບ ຫ້ອງແຊັດ + ຫ້ອງໂພສ + ຫ້ອງໂທສຽງ",
-            body: "ຕອນນີ້ສາມາດສະຫຼັບຫ້ອງລະຫວ່າງ Text Chat, Post/Forum ແລະ Voice Channel ໄດ້ໃນໜ້າດຽວແລ້ວ!",
-            imageUrl: "",
-            likes: 2,
-            likedByMe: false,
-            comments: [{ author: "Guest Member", text: "ໃຊ້ງານງ່າຍຂຶ້ນຫຼາຍ!" }]
-          }
-        ],
-        ch_post_showcase: []
+        ch_post_news: [{
+          id: "p1", author: "System", time: "ມື້ນີ້", tag: "ອັບເດດ",
+          title: "ອັບເດດ v0.4.2 — ເຂົ້າ/ອອກຫ້ອງສຽງ + STUN + Friends",
+          body: "ເພີ່ມປຸ່ມອອກຈາກຫ້ອງສຽງທັງໃນ Dock ແລະ Sidebar, ລະບົບໝູ່ເພື່ອນ (Add/Remove/Block), ແລະ STUN Server ສຳລັບໂທສຽງ.",
+          imageUrl: "", likes: 1, likedByMe: false, comments: []
+        }]
       }
     };
 
-    const peer = new Peer();
-    let localStream;
-    let currentCall;
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+    /* ================= FRIENDS LOGIC ================= */
+    function openFriendsView() { state.viewMode = "friends"; renderAll(); }
+    function setFriendTab(tab) { state.friendTab = tab; renderStageBody(); }
+    function addFriend(event) {
+      event.preventDefault();
+      const name = document.getElementById("friend-name-input").value.trim();
+      const peerId = document.getElementById("friend-peer-input").value.trim();
+      const email = document.getElementById("friend-email-input").value.trim();
+      if (!name || !peerId) return alert("ກະລຸນາໃສ່ຊື່ໝູ່ ແລະ Peer ID");
+      if (state.friends.some(f => f.peerId === peerId)) return alert("Peer ID ນີ້ມີໃນລາຍຊື່ໝູ່ແລ້ວ");
+      state.friends.unshift({ id: "fr_" + Date.now(), name, peerId, email: email || "", blocked: false, addedAt: nowTime() });
+      saveFriends();
+      renderAll();
     }
-
-    function nowTime() {
-      return new Date().toLocaleTimeString("lo-LA", { hour: "2-digit", minute: "2-digit" });
+    function quickAddCurrentRemoteFriend() {
+      const targetId = state.remotePeerId || (document.getElementById("remote-id-input")?.value.trim() || "");
+      if (!targetId) return alert("ກະລຸນາໃສ່ Peer ID ກ່ອນ");
+      if (state.friends.some(f => f.peerId === targetId)) return alert("ID ນີ້ຢູ່ໃນລາຍຊື່ໝູ່ແລ້ວ");
+      const name = prompt("ຕັ້ງຊື່ໃຫ້ໝູ່ຄົນນີ້:");
+      if (!name || !name.trim()) return;
+      state.friends.unshift({ id: "fr_" + Date.now(), name: name.trim(), peerId: targetId, email: "", blocked: false, addedAt: nowTime() });
+      saveFriends();
+      renderAll();
     }
-
-    /* PeerJS Voice */
-    peer.on("open", id => {
-      document.getElementById("my-peer-id").innerText = id;
-    });
-
-    peer.on("error", err => {
-      state.callStatus = "Error: " + err.type;
-      renderStageHeader();
-    });
-
-    peer.on("call", async call => {
-      try {
-        state.callStatus = "ກຳລັງຮັບສາຍ...";
-        renderStageHeader();
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        applyAudioTrackStates();
-        call.answer(localStream);
-        setupCallEvents(call);
-      } catch (err) {
-        alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
+    function removeFriend(friendId) {
+      const f = state.friends.find(x => x.id === friendId);
+      if (!f) return;
+      if (!confirm(`ຕ້ອງການລົບ "${f.name}" ອອກຈາກລາຍຊື່ໝູ່ແທ້ບໍ່?`)) return;
+      state.friends = state.friends.filter(x => x.id !== friendId);
+      saveFriends();
+      renderAll();
+    }
+    function toggleBlockFriend(friendId) {
+      const f = state.friends.find(x => x.id === friendId);
+      if (!f) return;
+      f.blocked = !f.blocked;
+      saveFriends();
+      if (f.blocked && state.inCall && state.remotePeerId === f.peerId) hangUp();
+      renderAll();
+    }
+    function isPeerBlocked(peerId) { return state.friends.some(f => f.peerId === peerId && f.blocked); }
+    function getFriendNameByPeer(peerId) {
+      const f = state.friends.find(x => x.peerId === peerId);
+      return f ? f.name : (peerId ? peerId.slice(0, 8) + "..." : "Remote");
+    }
+    function callFriendById(peerId) {
+      if (isPeerBlocked(peerId)) return alert("ໝູ່ຄົນນີ້ຖືກ Block ຢູ່ — ກະລຸນາປົດ Block ກ່ອນໂທ");
+      const voiceCh = state.channels.find(c => c.id === state.connectedVoiceChannelId && c.type === "voice")
+        || state.channels.find(c => c.type === "voice");
+      if (voiceCh) {
+        state.viewMode = "channel";
+        state.activeChannelId = voiceCh.id;
+        state.connectedVoiceChannelId = voiceCh.id;
+        renderAll();
       }
-    });
+      startCall(peerId);
+    }
 
-    async function startCall() {
-      const input = document.getElementById("remote-id-input");
-      const friendId = input ? input.value.trim() : "";
-      if (!friendId) return alert("ກະລຸນາໃສ່ ID ຂອງໝູ່");
+    /* ================= PEERJS & VOICE ACTIVITY ================= */
+    let peer = null;
+    let localStream = null;
+    let currentCall = null;
+    let audioCtx = null;
+
+    function startSpeakingMonitor(stream, isLocal) {
       try {
-        state.callStatus = "ກຳລັງໂທຫາ...";
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        const interval = setInterval(() => {
+          if (!stream.active) { clearInterval(interval); return; }
+          analyser.getByteFrequencyData(data);
+          const avg = data.reduce((a, b) => a + b, 0) / data.length;
+          const speaking = avg > 18 && (isLocal ? !state.isMuted : !state.isDeafened);
+          const prev = isLocal ? state.isLocalSpeaking : state.isRemoteSpeaking;
+          if (speaking !== prev) {
+            if (isLocal) state.isLocalSpeaking = speaking;
+            else state.isRemoteSpeaking = speaking;
+            updateSpeakingClasses();
+          }
+        }, 120);
+        return interval;
+      } catch { return null; }
+    }
+
+    function updateSpeakingClasses() {
+      const localTile = document.getElementById("tile-local");
+      if (localTile) localTile.classList.toggle("speaking", state.isLocalSpeaking);
+      const remoteTile = document.getElementById("tile-remote");
+      if (remoteTile) remoteTile.classList.toggle("speaking", state.isRemoteSpeaking);
+      const localMini = document.getElementById("mini-avatar-local");
+      if (localMini) localMini.classList.toggle("speaking", state.isLocalSpeaking);
+    }
+
+    function initPeer() {
+      if (peer) return;
+      peer = new Peer({
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" }
+          ]
+        }
+      });
+
+      peer.on("open", id => {
+        document.getElementById("my-peer-id").innerText = id;
+        state.callStatus = "🟢 ພ້ອມໂທສຽງ";
         renderStageHeader();
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      });
+
+      peer.on("disconnected", () => {
+        state.callStatus = "⚠️ ສັນຍານຫຼຸດ — ກຳລັງເຊື່ອມຕໍ່ໃໝ່...";
+        renderStageHeader();
+        setTimeout(() => {
+          if (peer && !peer.destroyed) peer.reconnect();
+        }, 2000);
+      });
+
+      peer.on("error", err => {
+        state.callStatus = "Error: " + err.type;
+        renderStageHeader();
+      });
+
+      peer.on("call", async call => {
+        if (isPeerBlocked(call.peer)) {
+          call.close();
+          state.callStatus = "🚫 ບລັອກສາຍເຂົ້າຈາກ " + getFriendNameByPeer(call.peer);
+          renderStageHeader();
+          return;
+        }
+        try {
+          state.callStatus = "ກຳລັງຮັບສາຍ...";
+          state.remotePeerId = call.peer;
+          if (!state.connectedVoiceChannelId) {
+            const firstVoice = state.channels.find(c => c.type === "voice");
+            if (firstVoice) state.connectedVoiceChannelId = firstVoice.id;
+          }
+          renderStageHeader();
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          });
+          applyAudioTrackStates();
+          startSpeakingMonitor(localStream, true);
+          call.answer(localStream);
+          setupCallEvents(call);
+        } catch (err) {
+          alert("ບໍ່ສາມາດເປີດໄມໂຄຣໂຟນໄດ້: " + err.message);
+        }
+      });
+    }
+
+    async function startCall(explicitPeerId = null) {
+      const input = document.getElementById("remote-id-input");
+      const friendId = (explicitPeerId || (input ? input.value.trim() : "")).trim();
+      const myId = document.getElementById("my-peer-id").innerText.trim();
+
+      if (!friendId) return alert("ກະລຸນາໃສ່ ID ຂອງໝູ່ ຫຼື ເລືອກຈາກລາຍຊື່ໝູ່");
+      if (friendId === myId) return alert("ບໍ່ສາມາດໂທຫາ ID ຂອງຕົວເອງໄດ້ — ໃຫ້ວາງ ID ຂອງເຄື່ອງໝູ່");
+      if (isPeerBlocked(friendId)) return alert("Peer ID ນີ້ຖືກ Block ຢູ່");
+
+      const activeCh = state.channels.find(c => c.id === state.activeChannelId);
+      if (activeCh && activeCh.type === "voice") {
+        state.connectedVoiceChannelId = activeCh.id;
+      }
+
+      try {
+        state.callStatus = "ກຳລັງໂທຫາ " + getFriendNameByPeer(friendId) + "...";
+        state.remotePeerId = friendId;
+        renderStageHeader();
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
         applyAudioTrackStates();
+        startSpeakingMonitor(localStream, true);
         const call = peer.call(friendId, localStream);
         setupCallEvents(call);
       } catch (err) {
@@ -444,14 +838,19 @@
     function setupCallEvents(call) {
       currentCall = call;
       state.inCall = true;
-      renderStageHeader();
+      state.remotePeerId = call.peer;
+      renderAll();
 
       call.on("stream", remoteStream => {
         const audioEl = document.getElementById("remote-audio");
         audioEl.srcObject = remoteStream;
         audioEl.muted = state.isDeafened;
-        state.callStatus = "🟢 ເຊື່ອມຕໍ່ສຽງສຳເລັດ";
-        renderStageHeader();
+        audioEl.volume = 1.0;
+        audioEl.play().catch(err => console.warn("Audio autoplay blocked:", err));
+
+        startSpeakingMonitor(remoteStream, false);
+        state.callStatus = "🟢 ກຳລັງໂທກັບ " + getFriendNameByPeer(call.peer);
+        renderAll();
       });
 
       call.on("close", resetCallUI);
@@ -464,10 +863,14 @@
 
     function resetCallUI() {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
       currentCall = null;
       state.inCall = false;
-      state.callStatus = "ວາງສາຍແລ້ວ";
-      renderStageHeader();
+      state.remotePeerId = null;
+      state.isLocalSpeaking = false;
+      state.isRemoteSpeaking = false;
+      state.callStatus = "🟢 ພ້ອມໂທສຽງ";
+      renderAll();
     }
 
     function applyAudioTrackStates() {
@@ -477,26 +880,14 @@
       track.enabled = state.isPTT ? (!state.isMuted && state.pttPressed) : !state.isMuted;
     }
 
-    function toggleMute() {
-      state.isMuted = !state.isMuted;
-      applyAudioTrackStates();
-      document.getElementById("btn-mute").innerText = state.isMuted ? "🔊 ເປີດໄມ" : "🔇 ປິດໄມ";
-      renderStageBody();
-    }
-
+    function toggleMute() { state.isMuted = !state.isMuted; applyAudioTrackStates(); renderAll(); }
     function toggleDeafen() {
       state.isDeafened = !state.isDeafened;
       document.getElementById("remote-audio").muted = state.isDeafened;
-      document.getElementById("btn-deafen").innerText = state.isDeafened ? "🔇 ສຽງປິດ" : "🎧 ສຽງເປີດ";
       renderStageBody();
     }
-
-    function togglePTT() {
-      state.isPTT = !state.isPTT;
-      state.pttPressed = false;
-      applyAudioTrackStates();
-      document.getElementById("btn-ptt").innerText = state.isPTT ? "PTT: On (Space)" : "PTT: Off";
-    }
+    function togglePTT() { state.isPTT = !state.isPTT; state.pttPressed = false; applyAudioTrackStates(); renderStageBody(); }
+    function toggleVoiceChatDrawer() { state.voiceChatOpen = !state.voiceChatOpen; renderStageBody(); }
 
     window.addEventListener("keydown", e => {
       const tag = document.activeElement.tagName;
@@ -506,7 +897,6 @@
         applyAudioTrackStates();
       }
     });
-
     window.addEventListener("keyup", e => {
       if (state.isPTT && e.code === "Space") {
         state.pttPressed = false;
@@ -520,11 +910,9 @@
       alert("ກັອບປີ້ ID ແລ້ວ: " + id);
     }
 
-    /* Permissions (TS3 Style) */
-    function canExecute(actorId, action, { targetId = null, targetChannelId = null } = {}) {
-      const actor = state.users[actorId];
-      if (!actor) return { allowed: false, reason: "ບໍ່ພົບຜູ້ໃຊ້" };
-
+    /* ================= CHANNELS (JOIN / LEAVE / CREATE / DELETE) ================= */
+    function canExecute(action, { targetChannelId = null } = {}) {
+      const actor = state.users.me;
       if (action === "join_channel") {
         const ch = state.channels.find(c => c.id === targetChannelId);
         if (!ch) return { allowed: false, reason: "ບໍ່ພົບຫ້ອງ" };
@@ -532,30 +920,50 @@
           ? { allowed: true }
           : { allowed: false, reason: `ຕ້ອງການ Join Power ${ch.neededJoinPower}` };
       }
-
-      if (action === "move_client") {
-        const target = state.users[targetId];
-        const ch = state.channels.find(c => c.id === targetChannelId);
-        if (!target || !ch) return { allowed: false, reason: "ຂໍ້ມູນບໍ່ຄົບ" };
-        return (actor.movePower >= target.neededMovePower && actor.joinPower >= ch.neededJoinPower)
-          ? { allowed: true }
-          : { allowed: false, reason: "Move/Join Power ບໍ່ພຽງພໍ" };
-      }
-      return { allowed: false, reason: "Unknown action" };
+      return { allowed: true };
     }
 
-    /* Channel Navigation & Creation */
     function selectChannel(channelId) {
-      const check = canExecute(state.currentUserId, "join_channel", { targetChannelId: channelId });
+      const check = canExecute("join_channel", { targetChannelId: channelId });
       if (!check.allowed) return alert("ເຂົ້າຫ້ອງບໍ່ໄດ້: " + check.reason);
+      const ch = state.channels.find(c => c.id === channelId);
+      state.viewMode = "channel";
       state.activeChannelId = channelId;
+      if (ch && ch.type === "voice") {
+        state.connectedVoiceChannelId = channelId;
+        if (!state.inCall) state.callStatus = "🟢 ຢູ່ໃນຫ້ອງສຽງແລ້ວ";
+      }
       state.replyTo = null;
       state.activePostTag = "All";
       renderAll();
     }
 
+    function joinVoiceChannel(channelId) {
+      const check = canExecute("join_channel", { targetChannelId: channelId });
+      if (!check.allowed) return alert("ເຂົ້າຫ້ອງບໍ່ໄດ້: " + check.reason);
+      state.connectedVoiceChannelId = channelId;
+      state.callStatus = "🟢 ຢູ່ໃນຫ້ອງສຽງແລ້ວ";
+      renderAll();
+    }
+
+    function leaveVoiceChannel() {
+      if (currentCall) currentCall.close();
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      currentCall = null;
+      state.inCall = false;
+      state.remotePeerId = null;
+      state.isLocalSpeaking = false;
+      state.isRemoteSpeaking = false;
+      state.connectedVoiceChannelId = null;
+      state.callStatus = "ອອກຈາກຫ້ອງສຽງແລ້ວ";
+      renderAll();
+    }
+
     function addChannel(type) {
-      const label = type === "voice" ? "ຫ້ອງໂທ/Sub-channel" : type === "text" ? "ຫ້ອງແຊັດ" : "ຫ້ອງໂພສ";
+      const label = type === "voice" ? "ຫ້ອງໂທສຽງ" : type === "text" ? "ຫ້ອງແຊັດ" : "ຫ້ອງໂພສ";
       const name = prompt(`ຊື່ ${label} ໃໝ່:`);
       if (!name || !name.trim()) return;
 
@@ -563,84 +971,82 @@
       if (type === "voice") {
         const active = state.channels.find(c => c.id === state.activeChannelId);
         if (active && active.type === "voice") {
-          parentId = active.parentId ? active.parentId : active.id;
+          const makeSub = confirm(`ຕ້ອງການສ້າງເປັນ Sub-channel ໃຕ້ "${active.name}" ບໍ່?\n(ກົດ Cancel ເພື່ອສ້າງເປັນຫ້ອງສຽງຫຼັກໃໝ່)`);
+          if (makeSub) parentId = active.parentId || active.id;
         }
       }
 
       const id = `ch_${type}_${Date.now()}`;
-      state.channels.push({
-        id,
-        type,
-        parentId,
-        name: name.trim(),
-        desc: `ສ້າງໃໝ່ (${label})`,
-        neededJoinPower: type === "voice" ? 10 : 0
-      });
+      state.channels.push({ id, type, parentId, name: name.trim(), desc: `ສ້າງໃໝ່ (${label})`, neededJoinPower: 0 });
+      saveChannels();
       if (type === "post") state.postsByChannel[id] = [];
       else state.messagesByChannel[id] = [{ id: "sys_" + Date.now(), sender: "System", time: nowTime(), text: `ສ້າງຫ້ອງ "${name.trim()}" ແລ້ວ`, reply: null, reactions: {} }];
 
+      state.viewMode = "channel";
       state.activeChannelId = id;
+      if (type === "voice") state.connectedVoiceChannelId = id;
       renderAll();
     }
 
-    /* Text Chat Functions */
+    function deleteChannel(event, channelId) {
+      event.stopPropagation();
+      const ch = state.channels.find(c => c.id === channelId);
+      if (!ch) return;
+
+      const sameType = state.channels.filter(c => c.type === ch.type && c.parentId === null);
+      if (ch.type === "voice" && !ch.parentId && sameType.length <= 1) {
+        return alert("ຕ້ອງເຫຼືອຫ້ອງສຽງຫຼັກໄວ້ຢ່າງໜ້ອຍ 1 ຫ້ອງ");
+      }
+
+      const childCount = state.channels.filter(c => c.parentId === channelId).length;
+      const msg = childCount > 0
+        ? `ຕ້ອງການລົບຫ້ອງ "${ch.name}" ແລະ Sub-channel ອີກ ${childCount} ຫ້ອງແທ້ບໍ່?`
+        : `ຕ້ອງການລົບຫ້ອງ "${ch.name}" ແທ້ບໍ່?`;
+      if (!confirm(msg)) return;
+
+      const idsToRemove = new Set([channelId]);
+      state.channels.forEach(c => { if (c.parentId === channelId) idsToRemove.add(c.id); });
+
+      state.channels = state.channels.filter(c => !idsToRemove.has(c.id));
+      saveChannels();
+
+      if (idsToRemove.has(state.connectedVoiceChannelId)) {
+        leaveVoiceChannel();
+      }
+      if (idsToRemove.has(state.activeChannelId)) {
+        const fallback = state.channels[0];
+        state.activeChannelId = fallback ? fallback.id : null;
+      }
+      renderAll();
+    }
+
+    /* ================= CHAT & POSTS ================= */
     function sendChatMessage(event) {
       event.preventDefault();
       const input = document.getElementById("chat-input");
       const text = input.value.trim();
       if (!text) return;
-
       const list = state.messagesByChannel[state.activeChannelId] || [];
-      list.push({
-        id: "m_" + Date.now(),
-        sender: state.users[state.currentUserId].name,
-        time: nowTime(),
-        text,
-        reply: state.replyTo,
-        reactions: {}
-      });
+      list.push({ id: "m_" + Date.now(), sender: state.users.me.name, time: nowTime(), text, reply: state.replyTo, reactions: {} });
       state.messagesByChannel[state.activeChannelId] = list;
       state.replyTo = null;
       input.value = "";
       renderStageBody();
     }
-
     function setReplyTo(msgId) {
-      const list = state.messagesByChannel[state.activeChannelId] || [];
-      const target = list.find(m => m.id === msgId);
+      const target = (state.messagesByChannel[state.activeChannelId] || []).find(m => m.id === msgId);
       if (!target) return;
       state.replyTo = { sender: target.sender, text: target.text };
       renderStageBody();
-      const input = document.getElementById("chat-input");
-      if (input) input.focus();
+      document.getElementById("chat-input")?.focus();
     }
-
-    function clearReply() {
-      state.replyTo = null;
-      renderStageBody();
-    }
-
+    function clearReply() { state.replyTo = null; renderStageBody(); }
     function toggleReaction(msgId, emoji) {
-      const list = state.messagesByChannel[state.activeChannelId] || [];
-      const msg = list.find(m => m.id === msgId);
+      const msg = (state.messagesByChannel[state.activeChannelId] || []).find(m => m.id === msgId);
       if (!msg) return;
       msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
       renderStageBody();
     }
-
-    function moveGuestToActiveChannel() {
-      const check = canExecute(state.currentUserId, "move_client", {
-        targetId: "peer_guest",
-        targetChannelId: state.activeChannelId
-      });
-      if (!check.allowed) return alert("ຍ້າຍບໍ່ໄດ້: " + check.reason);
-      const list = state.messagesByChannel[state.activeChannelId] || [];
-      list.push({ id: "m_" + Date.now(), sender: "System", time: nowTime(), text: "ຍ້າຍ Guest Member ເຂົ້າຫ້ອງນີ້ສຳເລັດ", reply: null, reactions: {} });
-      state.messagesByChannel[state.activeChannelId] = list;
-      renderStageBody();
-    }
-
-    /* Post / Forum Functions */
     function createPost(event) {
       event.preventDefault();
       const title = document.getElementById("post-title").value.trim();
@@ -648,117 +1054,130 @@
       const tag = document.getElementById("post-tag").value;
       const imageUrl = document.getElementById("post-img").value.trim();
       if (!title || !body) return alert("ກະລຸນາໃສ່ຫົວຂໍ້ ແລະ ເນື້ອຫາໂພສ");
-
       const list = state.postsByChannel[state.activeChannelId] || [];
-      list.unshift({
-        id: "p_" + Date.now(),
-        author: state.users[state.currentUserId].name,
-        time: nowTime(),
-        tag,
-        title,
-        body,
-        imageUrl,
-        likes: 0,
-        likedByMe: false,
-        comments: []
-      });
+      list.unshift({ id: "p_" + Date.now(), author: state.users.me.name, time: nowTime(), tag, title, body, imageUrl, likes: 0, likedByMe: false, comments: [] });
       state.postsByChannel[state.activeChannelId] = list;
       renderStageBody();
     }
-
     function toggleLikePost(postId) {
-      const list = state.postsByChannel[state.activeChannelId] || [];
-      const post = list.find(p => p.id === postId);
+      const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
       if (!post) return;
       post.likedByMe = !post.likedByMe;
       post.likes += post.likedByMe ? 1 : -1;
       renderStageBody();
     }
-
     function addComment(event, postId) {
       event.preventDefault();
       const input = event.target.querySelector("input");
       const text = input.value.trim();
       if (!text) return;
-      const list = state.postsByChannel[state.activeChannelId] || [];
-      const post = list.find(p => p.id === postId);
+      const post = (state.postsByChannel[state.activeChannelId] || []).find(p => p.id === postId);
       if (!post) return;
-      post.comments.push({ author: state.users[state.currentUserId].name, text });
+      post.comments.push({ author: state.users.me.name, text });
       renderStageBody();
     }
+    function setPostTagFilter(tag) { state.activePostTag = tag; renderStageBody(); }
 
-    function setPostTagFilter(tag) {
-      state.activePostTag = tag;
-      renderStageBody();
-    }
-
-    /* Renderers */
+    /* ================= RENDERERS ================= */
     function renderChannelTree() {
       const nav = document.getElementById("channel-tree");
       nav.innerHTML = "";
-      const me = state.users[state.currentUserId];
+      const me = state.users.me;
+
+      document.getElementById("nav-friends").classList.toggle("active", state.viewMode === "friends");
+      document.getElementById("friends-count-badge").innerText = state.friends.filter(f => !f.blocked).length;
 
       const groups = [
         { type: "text", title: "ຫ້ອງແຊັດ (Text)", icon: "#" },
-        { type: "post", title: "ຫ້ອງໂພສ (Forum)", icon: "📝" },
+        { type: "post", title: "ຫ້ອງໂພສ (Forum)", icon: "▤" },
         { type: "voice", title: "ຫ້ອງໂທສຽງ (Voice)", icon: "🔊" }
       ];
 
       groups.forEach(group => {
         const header = document.createElement("div");
         header.className = "cat-label";
-        header.innerHTML = `
-          <span>${group.title}</span>
-          <button type="button" class="cat-add" title="ເພີ່ມຫ້ອງ" onclick="addChannel('${group.type}')">+</button>
-        `;
+        header.innerHTML = `<span>${group.title}</span><button type="button" class="cat-add" title="ສ້າງຫ້ອງໃໝ່" onclick="addChannel('${group.type}')">+</button>`;
         nav.appendChild(header);
 
         const renderLevel = (parentId) => {
-          state.channels
-            .filter(c => c.type === group.type && c.parentId === parentId)
-            .forEach(ch => {
-              const locked = me.joinPower < ch.neededJoinPower;
-              const div = document.createElement("div");
-              div.className = `channel-item ${ch.parentId ? "is-sub" : ""} ${ch.id === state.activeChannelId ? "active" : ""} ${locked ? "locked" : ""}`;
-              div.onclick = () => selectChannel(ch.id);
-              div.innerHTML = `
-                <span>${ch.parentId ? "↳ " : group.icon + " "}${escapeHtml(ch.name)}</span>
-                ${ch.type === "voice" ? `<span class="badge">${locked ? "🔒 " + ch.neededJoinPower : "JP " + ch.neededJoinPower}</span>` : ""}
+          state.channels.filter(c => c.type === group.type && c.parentId === parentId).forEach(ch => {
+            const locked = me.joinPower < ch.neededJoinPower;
+            const isActive = state.viewMode === "channel" && ch.id === state.activeChannelId;
+            const div = document.createElement("div");
+            div.className = `channel-item ${ch.parentId ? "is-sub" : ""} ${isActive ? "active" : ""} ${locked ? "locked" : ""}`;
+            div.onclick = () => selectChannel(ch.id);
+            div.innerHTML = `
+              <span class="channel-name">${ch.parentId ? "↳ " : group.icon + " "}${escapeHtml(ch.name)}</span>
+              <span class="channel-right">
+                ${ch.type === "voice" && ch.neededJoinPower > 0 ? `<span class="badge">${locked ? "🔒" : "JP"}${ch.neededJoinPower}</span>` : ""}
+                <button type="button" class="ch-del-btn" title="ລົບຫ້ອງ" onclick="deleteChannel(event, '${ch.id}')">✕</button>
+              </span>
+            `;
+            nav.appendChild(div);
+
+            if (ch.type === "voice" && state.connectedVoiceChannelId === ch.id) {
+              const occ = document.createElement("div");
+              occ.className = "voice-occupants";
+              occ.innerHTML = `
+                <div class="voice-occ-item">
+                  <span id="mini-avatar-local" class="mini-avatar ${state.isLocalSpeaking ? "speaking" : ""}">${escapeHtml(initials(me.name))}</span>
+                  <span>${escapeHtml(me.name)} ${state.isMuted ? "🔇" : ""}</span>
+                </div>
+                ${state.inCall && state.remotePeerId ? `
+                  <div class="voice-occ-item">
+                    <span class="mini-avatar ${state.isRemoteSpeaking ? "speaking" : ""}">${escapeHtml(initials(getFriendNameByPeer(state.remotePeerId)))}</span>
+                    <span>${escapeHtml(getFriendNameByPeer(state.remotePeerId))}</span>
+                  </div>` : ""}
               `;
-              nav.appendChild(div);
-              renderLevel(ch.id);
-            });
+              nav.appendChild(occ);
+            }
+
+            renderLevel(ch.id);
+          });
         };
         renderLevel(null);
       });
+
+      // ອັບເດດແຖບສະຖານະ Voice + ປຸ່ມອອກຫ້ອງຢູ່ Sidebar
+      const vBar = document.getElementById("voice-status-bar");
+      const vName = document.getElementById("voice-status-name");
+      if (vBar && vName) {
+        const connCh = state.channels.find(c => c.id === state.connectedVoiceChannelId);
+        if (connCh) {
+          vName.innerText = connCh.name;
+          vBar.classList.remove("hidden");
+        } else {
+          vBar.classList.add("hidden");
+        }
+      }
     }
 
     function renderStageHeader() {
+      const actions = document.getElementById("header-actions");
+      if (state.viewMode === "friends") {
+        document.getElementById("active-channel-title").innerText = "👥 ໝູ່ເພື່ອນ (Friends)";
+        document.getElementById("active-channel-sub").innerText = "ເພີ່ມໝູ່, ໂທຫາດ່ວນ, ລົບ ຫຼື Block";
+        actions.innerHTML = `
+          <button type="button" class="tag-pill ${state.friendTab === "all" ? "active" : ""}" onclick="setFriendTab('all')">ທັງໝົດ (${state.friends.filter(f => !f.blocked).length})</button>
+          <button type="button" class="tag-pill ${state.friendTab === "blocked" ? "active" : ""}" onclick="setFriendTab('blocked')">ບລັອກແລ້ວ (${state.friends.filter(f => f.blocked).length})</button>
+        `;
+        return;
+      }
+
       const ch = state.channels.find(c => c.id === state.activeChannelId);
       if (!ch) return;
-      const prefix = ch.type === "text" ? "# " : ch.type === "post" ? "📝 " : "🔊 ";
-      document.getElementById("active-channel-title").innerText = prefix + ch.name;
+      document.getElementById("active-channel-title").innerText = (ch.type === "voice" ? "🔊 " : ch.type === "text" ? "# " : "▤ ") + ch.name;
       document.getElementById("active-channel-sub").innerText = ch.type === "voice" ? state.callStatus : ch.desc;
-
-      const actions = document.getElementById("header-actions");
-      if (ch.type === "voice") {
-        actions.innerHTML = `
-          <input id="remote-id-input" type="text" placeholder="ວາງ ID ຄູ່ສາຍ..." />
-          ${!state.inCall
-            ? `<button type="button" onclick="startCall()">📞 ໂທຫາ (Join Call)</button>`
-            : `<button type="button" class="btn-hangup" onclick="hangUp()">📵 ວາງສາຍ</button>`}
-        `;
-      } else {
-        actions.innerHTML = `<span class="badge">${ch.type === "text" ? "Text Channel" : "Forum / Post"}</span>`;
-      }
+      actions.innerHTML = ch.type === "voice"
+        ? `<button type="button" class="btn-small" onclick="toggleVoiceChatDrawer()">💬 ${state.voiceChatOpen ? "ເຊື່ອງແຊັດ" : "ເປີດແຊັດ"}</button>`
+        : `<span class="badge">${ch.type === "text" ? "Text Channel" : "Forum / Post"}</span>`;
     }
 
     function renderChatSection(channelId) {
       const list = state.messagesByChannel[channelId] || [];
       const feedHtml = list.map(m => {
         const reacts = Object.entries(m.reactions || {})
-          .map(([emoji, count]) => `<button type="button" class="react-btn" onclick="toggleReaction('${m.id}','${emoji}')">${emoji} ${count}</button>`)
-          .join("");
+          .map(([emoji, count]) => `<button type="button" class="react-btn" onclick="toggleReaction('${m.id}','${emoji}')">${emoji} ${count}</button>`).join("");
         return `
           <div class="msg-item">
             <div class="msg-top">
@@ -769,20 +1188,15 @@
             <div>${escapeHtml(m.text)}</div>
             <div class="msg-actions">
               ${reacts}
-              <button type="button" class="react-btn" onclick="toggleReaction('${m.id}','👍')">+👍</button>
-              <button type="button" class="react-btn" onclick="toggleReaction('${m.id}','🔥')">+🔥</button>
+              <button type="button" class="react-btn hover-only" onclick="toggleReaction('${m.id}','👍')">+👍</button>
+              <button type="button" class="react-btn hover-only" onclick="toggleReaction('${m.id}','🔥')">+🔥</button>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join("");
 
       return `
         <section id="chat-messages" class="chat-feed">${feedHtml || `<div class="stage-sub">ຍັງບໍ່ມີຂໍ້ຄວາມໃນຫ້ອງນີ້</div>`}</section>
-        ${state.replyTo ? `
-          <div class="reply-banner">
-            <span>ກຳລັງຕອບກັບ <strong>${escapeHtml(state.replyTo.sender)}</strong>: ${escapeHtml(state.replyTo.text)}</span>
-            <button type="button" class="btn-small" onclick="clearReply()">✕</button>
-          </div>` : ""}
+        ${state.replyTo ? `<div class="reply-banner"><span>ຕອບກັບ <strong>${escapeHtml(state.replyTo.sender)}</strong>: ${escapeHtml(state.replyTo.text)}</span><button type="button" class="btn-small" onclick="clearReply()">✕</button></div>` : ""}
         <form class="chat-input-bar" onsubmit="sendChatMessage(event)">
           <input id="chat-input" type="text" placeholder="ພິມຂໍ້ຄວາມ..." autocomplete="off" />
           <button type="submit">ສົ່ງ</button>
@@ -791,71 +1205,133 @@
     }
 
     function renderStageBody() {
-      const ch = state.channels.find(c => c.id === state.activeChannelId);
       const body = document.getElementById("stage-body");
+
+      if (state.viewMode === "friends") {
+        const list = state.friends.filter(f => state.friendTab === "blocked" ? f.blocked : !f.blocked);
+        body.innerHTML = `
+          <div class="friends-layout">
+            <form class="add-friend-card" onsubmit="addFriend(event)">
+              <strong style="font-size: 14px;">➕ ເພີ່ມໝູ່ໃໝ່ (Add Friend)</strong>
+              <div class="add-friend-row">
+                <input id="friend-name-input" type="text" placeholder="ຊື່ໝູ່ (ເຊັ່ນ Leo)" required />
+                <input id="friend-peer-input" type="text" placeholder="Peer ID ຂອງໝູ່..." required />
+                <input id="friend-email-input" type="text" placeholder="name@mdc.http (ຖ້າມີ)" />
+                <button type="submit">ບັນທຶກໝູ່</button>
+              </div>
+            </form>
+
+            ${list.map(f => `
+              <div class="friend-card">
+                <div class="friend-info">
+                  <div class="friend-avatar">${escapeHtml(initials(f.name))}</div>
+                  <div>
+                    <strong>${escapeHtml(f.name)} ${f.blocked ? '<span class="badge" style="color:#fca5a5;">Blocked</span>' : ""}</strong>
+                    <div class="user-email-mini">ID: ${escapeHtml(f.peerId)} ${f.email ? "• " + escapeHtml(f.email) : ""}</div>
+                  </div>
+                </div>
+                <div class="friend-actions">
+                  ${!f.blocked ? `<button type="button" onclick="callFriendById('${escapeHtml(f.peerId)}')">📞 ໂທຫາ</button>` : ""}
+                  <button type="button" class="btn-small" onclick="toggleBlockFriend('${f.id}')">${f.blocked ? "ປົດ Block" : "🚫 Block"}</button>
+                  <button type="button" class="btn-small btn-danger-soft" onclick="removeFriend('${f.id}')">🗑️ ລົບໝູ່</button>
+                </div>
+              </div>
+            `).join("") || `<div class="stage-sub">${state.friendTab === "blocked" ? "ຍັງບໍ່ມີລາຍຊື່ທີ່ຖືກ Block" : "ຍັງບໍ່ມີໝູ່ໃນລາຍຊື່ — ເພີ່ມໝູ່ດ້ານເທິງໄດ້ເລີຍ"}</div>`}
+          </div>
+        `;
+        return;
+      }
+
+      const ch = state.channels.find(c => c.id === state.activeChannelId);
       if (!ch) return;
 
       if (ch.type === "voice") {
-        const me = state.users[state.currentUserId];
-        const guest = state.users.peer_guest;
+        const me = state.users.me;
+        const activeFriends = state.friends.filter(f => !f.blocked);
+        const remoteName = state.remotePeerId ? getFriendNameByPeer(state.remotePeerId) : null;
+        const isInThisVoice = state.connectedVoiceChannelId === ch.id;
+
         body.innerHTML = `
-          <section class="voice-grid">
-            <div class="member-card">
-              <div class="member-top">
-                <strong>${escapeHtml(me.name)} (JP ${me.joinPower})</strong>
-                <span class="badge">${state.isMuted ? "Muted" : "Mic On"}</span>
+          <div class="voice-workspace ${state.voiceChatOpen ? "" : "chat-closed"}">
+            <section class="voice-stage-col">
+              <div class="voice-call-bar">
+                <input id="remote-id-input" type="text" placeholder="ວາງ Peer ID ຂອງເຄື່ອງໝູ່..." value="${escapeHtml(state.remotePeerId || "")}" style="flex:1; min-width:170px;" />
+                ${activeFriends.length ? `
+                  <select onchange="if(this.value) document.getElementById('remote-id-input').value = this.value">
+                    <option value="">-- ເລືອກຈາກໝູ່ --</option>
+                    ${activeFriends.map(f => `<option value="${escapeHtml(f.peerId)}">${escapeHtml(f.name)}</option>`).join("")}
+                  </select>` : ""}
+                ${!state.inCall
+                  ? `<button type="button" onclick="startCall()">📞 ໂທເຂົ້າຫ້ອງ</button>`
+                  : `<button type="button" class="btn-danger" onclick="hangUp()">📵 ວາງສາຍ</button>`}
+                <button type="button" class="btn-small" onclick="quickAddCurrentRemoteFriend()" title="ບັນທຶກ ID ນີ້ເປັນໝູ່">+ Add ໝູ່</button>
               </div>
-              <small class="stage-sub">Audio: ${state.isDeafened ? "Deafened" : "Active"}</small>
-            </div>
-            <div class="member-card">
-              <div class="member-top">
-                <strong>${escapeHtml(guest.name)}</strong>
-                <button type="button" class="btn-small" onclick="moveGuestToActiveChannel()">Move ຫ້ອງນີ້</button>
+
+              <div class="voice-tiles">
+                ${isInThisVoice ? `
+                  <div id="tile-local" class="voice-tile ${state.isLocalSpeaking ? "speaking" : ""}">
+                    <div class="voice-avatar">${escapeHtml(initials(me.name))}</div>
+                    <div class="voice-tile-footer">
+                      <span class="voice-name-pill">${escapeHtml(me.name)} (You)</span>
+                      <span class="badge">${state.isMuted ? "🔇 Muted" : "🎙️ Live"} ${state.isDeafened ? "• 🔕" : ""}</span>
+                    </div>
+                  </div>` : `
+                  <div class="voice-tile" style="opacity:0.7; border: 1px dashed var(--bg-hover); background: transparent;">
+                    <div class="stage-sub" style="text-align:center;">ເຈົ້າອອກຈາກຫ້ອງ ${escapeHtml(ch.name)} ແລ້ວ<br/>ກົດປຸ່ມ "🔊 ເຂົ້າຫ້ອງສຽງ" ດ້ານລຸ່ມເພື່ອກັບເຂົ້າມາ</div>
+                  </div>`}
+
+                ${state.inCall && remoteName ? `
+                  <div id="tile-remote" class="voice-tile ${state.isRemoteSpeaking ? "speaking" : ""}">
+                    <div class="voice-avatar">${escapeHtml(initials(remoteName))}</div>
+                    <div class="voice-tile-footer">
+                      <span class="voice-name-pill">${escapeHtml(remoteName)}</span>
+                      <span class="badge">🟢 Connected</span>
+                    </div>
+                  </div>` : `
+                  <div class="voice-tile" style="opacity:0.55; border: 1px dashed var(--bg-hover); background: transparent;">
+                    <div class="stage-sub" style="text-align:center;">ວາງ Peer ID ຂອງໝູ່ ຫຼື ເລືອກໝູ່ດ້ານເທິງ<br/>ເພື່ອເຊື່ອມຕໍ່ສຽງໃນຫ້ອງ ${escapeHtml(ch.name)}</div>
+                  </div>`}
               </div>
-              <small class="stage-sub">Join Power: ${guest.joinPower}</small>
-            </div>
-          </section>
-          ${renderChatSection(ch.id)}
+
+              <div class="voice-dock">
+                <button type="button" class="dock-btn ${state.isMuted ? "active" : ""}" onclick="toggleMute()" title="ປິດ/ເປີດໄມ">${state.isMuted ? "🔇" : "🎙️"}</button>
+                <button type="button" class="dock-btn ${state.isDeafened ? "active" : ""}" onclick="toggleDeafen()" title="ປິດ/ເປີດສຽງ">${state.isDeafened ? "🔕" : "🎧"}</button>
+                <button type="button" class="dock-btn ${state.isPTT ? "ptt-on" : ""}" onclick="togglePTT()" title="Push-to-Talk (Space)">${state.isPTT ? "PTT: Space" : "⌨️"}</button>
+                ${isInThisVoice
+                  ? `<button type="button" class="dock-btn disconnect" onclick="leaveVoiceChannel()" title="ອອກຈາກຫ້ອງສຽງ">📵</button>`
+                  : `<button type="button" class="dock-btn ptt-on" onclick="joinVoiceChannel('${ch.id}')">🔊 ເຂົ້າຫ້ອງສຽງ</button>`}
+              </div>
+            </section>
+
+            ${state.voiceChatOpen ? `<aside class="voice-side-chat">${renderChatSection(ch.id)}</aside>` : ""}
+          </div>
         `;
       } else if (ch.type === "text") {
         body.innerHTML = renderChatSection(ch.id);
       } else if (ch.type === "post") {
         const allPosts = state.postsByChannel[ch.id] || [];
         const tags = ["All", "ທົ່ວໄປ", "ອັບເດດ", "ຄຳຖາມ", "ຜົນງານ"];
-        const filtered = state.activePostTag === "All"
-          ? allPosts
-          : allPosts.filter(p => p.tag === state.activePostTag);
-
+        const filtered = state.activePostTag === "All" ? allPosts : allPosts.filter(p => p.tag === state.activePostTag);
         body.innerHTML = `
           <div class="post-layout">
             <form class="post-composer" onsubmit="createPost(event)">
               <div class="post-composer-row">
                 <input id="post-title" type="text" placeholder="ຫົວຂໍ້ໂພສໃໝ່..." required />
-                <select id="post-tag">
-                  <option value="ທົ່ວໄປ">ທົ່ວໄປ</option>
-                  <option value="ອັບເດດ">ອັບເດດ</option>
-                  <option value="ຄຳຖາມ">ຄຳຖາມ</option>
-                  <option value="ຜົນງານ">ຜົນງານ</option>
-                </select>
+                <select id="post-tag"><option value="ທົ່ວໄປ">ທົ່ວໄປ</option><option value="ອັບເດດ">ອັບເດດ</option><option value="ຄຳຖາມ">ຄຳຖາມ</option><option value="ຜົນງານ">ຜົນງານ</option></select>
               </div>
               <textarea id="post-body" rows="3" placeholder="ຂຽນລາຍລະອຽດໂພສ..." required></textarea>
               <div class="post-composer-row">
-                <input id="post-img" type="url" placeholder="ລິ້ງຮູບພາບ (ຖ້າມີ, ບໍ່ບັງຄັບ)..." />
-                <button type="submit">📝 ໂພສໃໝ່</button>
+                <input id="post-img" type="url" placeholder="ລິ້ງຮູບພາບ (ຖ້າມີ)..." />
+                <button type="submit">ໂພສໃໝ່</button>
               </div>
             </form>
-
             <div class="tag-bar">
               ${tags.map(t => `<button type="button" class="tag-pill ${state.activePostTag === t ? "active" : ""}" onclick="setPostTagFilter('${t}')">${t}</button>`).join("")}
             </div>
-
             ${filtered.map(p => `
               <article class="post-card">
                 <div class="post-header">
-                  <div>
-                    <h3 class="post-title">${escapeHtml(p.title)}</h3>
-                    <div class="stage-sub">ໂດຍ ${escapeHtml(p.author)} • ${escapeHtml(p.time)}</div>
-                  </div>
+                  <div><h3 class="post-title">${escapeHtml(p.title)}</h3><div class="stage-sub">ໂດຍ ${escapeHtml(p.author)} • ${escapeHtml(p.time)}</div></div>
                   <span class="badge">${escapeHtml(p.tag)}</span>
                 </div>
                 <p class="post-body">${escapeHtml(p.body)}</p>
@@ -887,7 +1363,28 @@
       renderStageBody();
     }
 
-    renderAll();
+    function bootWorkspace() {
+      const session = getSession();
+      if (!session) {
+        document.getElementById("auth-gate").classList.remove("hidden");
+        document.getElementById("app-workspace").classList.add("hidden");
+        return;
+      }
+      state.users.me.name = session.displayName;
+      state.users.me.email = session.email;
+      state.users.me.joinPower = session.joinPower ?? 50;
+      state.users.me.movePower = session.movePower ?? 50;
+
+      document.getElementById("sidebar-user-name").innerText = session.displayName;
+      document.getElementById("sidebar-user-email").innerText = session.email;
+      document.getElementById("auth-gate").classList.add("hidden");
+      document.getElementById("app-workspace").classList.remove("hidden");
+
+      initPeer();
+      renderAll();
+    }
+
+    bootWorkspace();
   </script>
 </body>
 </html>
